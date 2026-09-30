@@ -10,9 +10,6 @@ import params as P
 from grid import Canopy
 
 
-INTERCEPTION_EFFICIENCY = 1.0
-FRUIT_INTERCEPTION = 12.0
-DOWNWASH_DECAY_LENGTH = 0.5
 MASS_FLOOR = 1e-6
 
 
@@ -32,7 +29,7 @@ def air_velocity(z: float, v_dw: float) -> np.ndarray:
     """Downwash field. Full strength above the canopy, decaying with depth."""
     if z <= 0.0:
         return np.array([0.0, v_dw])
-    return np.array([0.0, v_dw * np.exp(-z / DOWNWASH_DECAY_LENGTH)])
+    return np.array([0.0, v_dw * np.exp(-z / P.DOWNWASH_DECAY_LENGTH.value)])
 
 
 def droplet_acceleration(vel: np.ndarray, v_air: np.ndarray,
@@ -66,6 +63,8 @@ def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
     before reaching the canopy receives no deposition at all.
     """
     dt = P.TIME_STEP.value if dt is None else dt
+    efficiency = P.INTERCEPTION_EFFICIENCY.value
+    fruit_capture = P.FRUIT_INTERCEPTION.value
 
     pos = np.array([x0, -altitude])
     vel = np.array([v_uav, v_dw])
@@ -93,9 +92,9 @@ def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
                     break
                 x = point[0] % canopy.x_edges[-1]
                 i, j = canopy.cell_of(x, z)
-                optical = canopy.lad[i, j] * INTERCEPTION_EFFICIENCY
+                optical = canopy.lad[i, j] * efficiency
                 if canopy.fruit_mask[i, j]:
-                    optical += FRUIT_INTERCEPTION
+                    optical += fruit_capture
                 captured = remaining * (1.0 - np.exp(-optical * seg))
                 deposits[(i, j)] = deposits.get((i, j), 0.0) + captured
                 remaining -= captured

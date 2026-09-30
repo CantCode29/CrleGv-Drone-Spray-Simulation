@@ -11,15 +11,12 @@ from typing import List, Tuple
 import params as P
 
 
-FRUIT_OPTICAL_DEPTH = 3.0
-FRUIT_RADIUS = 0.04
-
 
 @dataclass
 class Fruit:
     x: float
     z: float
-    radius: float = FRUIT_RADIUS
+    radius: float = P.FRUIT_RADIUS.value
 
 
 @dataclass
@@ -55,11 +52,11 @@ def default_fruits(width: float, depth: float) -> List[Fruit]:
     requires it to do. Positions are a regular staggered arrangement in the
     outer and mid canopy where fruit is borne.
     """
-    xs = np.arange(0.35, width, 0.55)
-    zs = [0.45, 0.95, 1.45]
+    spacing = P.FRUIT_SPACING.value
+    xs = np.arange(P.FRUIT_FIRST_X_M, width, spacing)
     fruits = []
-    for row, z in enumerate(zs):
-        offset = 0.0 if row % 2 == 0 else 0.275
+    for row, z in enumerate(P.FRUIT_ROW_DEPTHS_M):
+        offset = 0.0 if row % 2 == 0 else spacing / 2.0
         for x in xs:
             if x + offset < width:
                 fruits.append(Fruit(x=float(x + offset), z=float(z)))
@@ -99,7 +96,7 @@ def build(lai_total: float = None,
     for f in fruits:
         shadow = np.abs(x_centres - f.x) <= f.radius
         below = z_centres > f.z
-        tau_fruit[np.ix_(shadow, below)] += FRUIT_OPTICAL_DEPTH
+        tau_fruit[np.ix_(shadow, below)] += P.FRUIT_OPTICAL_DEPTH.value
         occupied_z = np.abs(z_centres - f.z) <= f.radius
         fruit_mask[np.ix_(shadow, occupied_z)] = True
 

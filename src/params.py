@@ -169,6 +169,44 @@ N_DROPLETS = Param(
     source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
 )
 
+INTERCEPTION_EFFICIENCY = Param(
+    symbol="eta", value=1.0, unit="dimensionless",
+    source="Model assumption, decision D2", status=ASSUMPTION,
+    note="Spray capture per metre of path through foliage is LAD x eta.",
+)
+
+FRUIT_INTERCEPTION = Param(
+    symbol="k_fruit", value=12.0, unit="1/m",
+    source="Model assumption, decisions D2 and D3", status=ASSUMPTION,
+    note="Extra spray capture per metre of path inside a fruit cell.",
+)
+
+FRUIT_RADIUS = Param(
+    symbol="r_fruit", value=0.04, unit="m",
+    source="Model assumption, decision D3", status=ASSUMPTION,
+)
+
+FRUIT_OPTICAL_DEPTH = Param(
+    symbol="tau_fruit", value=3.0, unit="dimensionless",
+    source="Model assumption, decision D3", status=ASSUMPTION,
+    note="UV optical depth added to every cell below a fruit body.",
+)
+
+FRUIT_SPACING = Param(
+    symbol="s_fruit", value=0.55, unit="m",
+    source="Model assumption, decision D3", status=ASSUMPTION,
+    note="Spacing within a row, starting 0.35 m from the edge; alternate "
+         "rows are offset by half a spacing.",
+)
+
+DOWNWASH_DECAY_LENGTH = Param(
+    symbol="L_dw", value=0.5, unit="m",
+    source="Model assumption, decision D4", status=ASSUMPTION,
+    note="Downwash falls as exp(-z / L_dw) with depth below the canopy top.",
+)
+
+FRUIT_FIRST_X_M = 0.35
+FRUIT_ROW_DEPTHS_M: Sequence[float] = (0.45, 0.95, 1.45)
 CHECKPOINTS_H: Sequence[float] = (24.0, 48.0, 72.0)
 
 ALL_PARAMS = [
@@ -177,6 +215,8 @@ ALL_PARAMS = [
     HALF_LIFE_EXPOSED, HALF_LIFE_SHADED, LC50, TEMPERATURE,
     UAV_ALTITUDE, UAV_VELOCITY, DOWNWASH_VELOCITY,
     DOMAIN_WIDTH, DOMAIN_DEPTH, CELL_SIZE, TIME_STEP, N_DROPLETS,
+    INTERCEPTION_EFFICIENCY, FRUIT_INTERCEPTION, FRUIT_RADIUS,
+    FRUIT_OPTICAL_DEPTH, FRUIT_SPACING, DOWNWASH_DECAY_LENGTH,
 ]
 
 SWEEP_PARAMS = [UAV_ALTITUDE, UAV_VELOCITY, DOWNWASH_VELOCITY, DROPLET_RADIUS]
