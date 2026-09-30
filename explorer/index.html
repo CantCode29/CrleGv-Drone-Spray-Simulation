@@ -2,240 +2,267 @@
 <meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a field-instrument panel. The settings rail on the left drives every readout on the right; on narrow screens the rail sits above the readouts. */
 :root {
-  --bg: #f2f3ef;
-  --surface: #fcfcfb;
-  --surface-2: #eceee8;
-  --line: #e1e0d9;
-  --axis: #c3c2b7;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --muted: #898781;
+  --bg: #eceff1;
+  --surface: #ffffff;
+  --surface-2: #f3f5f7;
+  --rule: #d5dbe0;
+  --axis: #b3bcc4;
+  --track: #cfd6dc;
+  --ink: #101c28;
+  --ink-2: #475563;
+  --muted: #8894a0;
+  --context: #8894a0;
+  --control: #101c28;
+  --control-ink: #ffffff;
+  --focus: #2a78d6;
+  --link: #1c5cab;
+  --band: #f2d449;
+  --band-ink: #101c28;
   --accent: #2a78d6;
-  --accent-ink: #1c5cab;
-  --context: #898781;
   --zone-outer: #86b6ef;
   --zone-mid: #2a78d6;
   --zone-inner: #104281;
   --zone-micro: #eb6834;
-  --good: #0ca30c;
   --good-ink: #006300;
-  --critical: #d03b3b;
-  --critical-ink: #d03b3b;
-  --shadow: rgba(11, 11, 11, 0.12);
-  --font-display: "Bricolage Grotesque", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --radius: 10px;
+  --critical-ink: #b8292f;
+  --shadow: rgba(16, 28, 40, 0.2);
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111311;
-    --surface: #1a1a19;
-    --surface-2: #242522;
-    --line: #2c2c2a;
-    --axis: #383835;
-    --ink: #ffffff;
-    --ink-2: #c3c2b7;
-    --muted: #898781;
+    --bg: #0c1116;
+    --surface: #131a21;
+    --surface-2: #1a232c;
+    --rule: #26313b;
+    --axis: #3b4854;
+    --track: #2f3b46;
+    --ink: #e6ebef;
+    --ink-2: #a3aeb8;
+    --muted: #6d7985;
+    --context: #7a8692;
+    --control: #e6ebef;
+    --control-ink: #0c1116;
+    --focus: #5598e7;
+    --link: #86b6ef;
+    --band: #d4b53a;
+    --band-ink: #101c28;
     --accent: #3987e5;
-    --accent-ink: #86b6ef;
-    --context: #898781;
     --zone-outer: #1c5cab;
     --zone-mid: #5598e7;
     --zone-inner: #b7d3f6;
     --zone-micro: #d95926;
-    --good: #0ca30c;
     --good-ink: #0ca30c;
-    --critical: #d03b3b;
-    --critical-ink: #e66767;
-    --shadow: rgba(0, 0, 0, 0.5);
+    --critical-ink: #ec7070;
+    --shadow: rgba(0, 0, 0, 0.55);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #111311;
-  --surface: #1a1a19;
-  --surface-2: #242522;
-  --line: #2c2c2a;
-  --axis: #383835;
-  --ink: #ffffff;
-  --ink-2: #c3c2b7;
-  --muted: #898781;
+  --bg: #0c1116;
+  --surface: #131a21;
+  --surface-2: #1a232c;
+  --rule: #26313b;
+  --axis: #3b4854;
+  --track: #2f3b46;
+  --ink: #e6ebef;
+  --ink-2: #a3aeb8;
+  --muted: #6d7985;
+  --context: #7a8692;
+  --control: #e6ebef;
+  --control-ink: #0c1116;
+  --focus: #5598e7;
+  --link: #86b6ef;
+  --band: #d4b53a;
+  --band-ink: #101c28;
   --accent: #3987e5;
-  --accent-ink: #86b6ef;
-  --context: #898781;
   --zone-outer: #1c5cab;
   --zone-mid: #5598e7;
   --zone-inner: #b7d3f6;
   --zone-micro: #d95926;
-  --good: #0ca30c;
   --good-ink: #0ca30c;
-  --critical: #d03b3b;
-  --critical-ink: #e66767;
-  --shadow: rgba(0, 0, 0, 0.5);
+  --critical-ink: #ec7070;
+  --shadow: rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
-body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
-.page { max-width: 1260px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; }
-h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
-h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; letter-spacing: -0.01em; }
-h2 { font-size: 22px; line-height: 1.2; }
-h3 { font-size: 15px; font-family: var(--font-body); font-weight: 700; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14.5px; line-height: 1.5; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
-.eyebrow { font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
-.lede { max-width: 68ch; color: var(--ink-2); font-size: 16px; }
-.intro { display: grid; gap: 10px; margin-bottom: 24px; }
-.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--ink-2); }
-.chip .icon { font-weight: 700; }
-.chip.good .icon { color: var(--good-ink); }
-.chip.bad .icon { color: var(--critical-ink); }
-.shell { display: grid; grid-template-columns: minmax(270px, 320px) minmax(0, 1fr); gap: 24px; align-items: start; }
-.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 16px; padding-block: 16px; display: grid; gap: 18px; }
-.readouts { display: grid; gap: 36px; min-width: 0; }
-@media (max-width: 920px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
-  .rail { position: static; max-height: none; }
-}
-fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 14px; }
-legend { font-family: var(--font-display); font-weight: 700; font-size: 15px; padding: 0; margin-bottom: 2px; }
-.group-note { font-size: 12.5px; color: var(--ink-2); margin-top: -8px; }
-.control { display: grid; gap: 4px; }
-.control-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.control-head label { font-size: 14px; }
-.control-head output { font-weight: 700; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.control input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
-.ticks { position: relative; height: 18px; margin-inline: 8px; }
-.ticks span { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--ink-2); white-space: nowrap; }
-.ticks span::before { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--axis); margin: 0 auto 2px; }
-.ticks span.on { color: var(--ink); font-weight: 700; }
-.ticks span.on::before { background: var(--accent); }
-.tag { font-size: 12px; color: var(--ink-2); min-height: 16px; }
-.presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.rail-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; margin-bottom: 8px; }
-button { font: inherit; font-size: 13px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
-button:hover { border-color: var(--axis); }
-button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.rail hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
-section.block { display: grid; gap: 14px; min-width: 0; }
+.wrap { max-width: 1280px; margin-inline: auto; padding-inline: 20px; }
+.band { background: var(--band); color: var(--band-ink); }
+.band-inner { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-block: 22px 18px; }
+.band-kicker { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.02em; margin-bottom: 8px; }
+.band h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 5vw, 54px); line-height: 0.95; letter-spacing: 0.005em; }
+.band-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-family: var(--font-mono); font-size: 12px; }
+.meta-item { white-space: nowrap; }
+.check { display: inline-flex; align-items: center; gap: 6px; padding-inline: 10px; padding-block: 4px; background: var(--surface); color: var(--ink); border: 1px solid var(--band-ink); font-family: var(--font-body); font-size: 12.5px; font-weight: 500; }
+.check .icon { font-weight: 700; }
+.check.good .icon { color: var(--good-ink); }
+.check.bad .icon { color: var(--critical-ink); }
+.page { padding-block: 22px 64px; display: grid; gap: 24px; }
+.lede { max-width: 72ch; color: var(--ink-2); font-size: 15px; }
+.shell { display: grid; grid-template-columns: minmax(280px, 320px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--rule); padding-inline: 16px; padding-block: 16px 18px; display: grid; gap: 18px; }
+.rail-head { display: grid; gap: 12px; }
+.rail h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; line-height: 1; letter-spacing: 0.06em; text-transform: uppercase; }
+.presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--control); }
+.presets button { font: inherit; font-size: 12.5px; font-weight: 500; color: var(--ink); background: var(--surface); border: 0; border-left: 1px solid var(--control); padding-inline: 4px; padding-block: 7px; cursor: pointer; }
+.presets button:first-child { border-left: 0; }
+.presets button:hover { background: var(--surface-2); }
+.presets button[aria-pressed="true"] { background: var(--control); color: var(--control-ink); }
+fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 14px 0 0; display: grid; gap: 16px; min-width: 0; }
+legend { float: left; width: 100%; padding: 0; font-family: var(--font-display); font-weight: 600; font-size: 16px; line-height: 1.1; letter-spacing: 0.08em; text-transform: uppercase; }
+.group-note { margin-top: -10px; font-size: 12.5px; color: var(--ink-2); }
+.control { display: grid; gap: 6px; }
+.control-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.control-head label { min-width: 0; font-size: 13.5px; font-weight: 500; }
+.sym { margin-left: 4px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+.sym sub { font-size: 0.8em; }
+.control-head output { flex: none; min-width: 72px; padding-inline: 7px; padding-block: 2px; text-align: right; font-family: var(--font-mono); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; background: var(--surface-2); border: 1px solid var(--rule); }
+.control input[type="range"] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; background: transparent; cursor: pointer; }
+.control input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(to right, var(--control) 0 var(--fill), var(--track) var(--fill) 100%); }
+.control input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 20px; margin-top: -8px; background: var(--surface); border: 2px solid var(--control); }
+.control input[type="range"]::-moz-range-track { height: 4px; background: var(--track); }
+.control input[type="range"]::-moz-range-progress { height: 4px; background: var(--control); }
+.control input[type="range"]::-moz-range-thumb { width: 8px; height: 16px; border-radius: 0; background: var(--surface); border: 2px solid var(--control); }
+.ticks { position: relative; height: 18px; margin-inline: 6px; }
+.ticks span { position: absolute; top: 0; padding-top: 6px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10.5px; line-height: 1.2; color: var(--ink-2); white-space: nowrap; }
+.ticks span::before { content: ""; position: absolute; top: 0; left: 50%; width: 1px; height: 4px; background: var(--axis); }
+.ticks span.on { color: var(--ink); font-weight: 600; }
+.ticks span.on::before { width: 2px; margin-left: -1px; background: var(--control); }
+.tag { min-height: 17px; font-size: 12px; color: var(--ink-2); }
+button:focus-visible, summary:focus-visible, .control input[type="range"]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.readouts { display: grid; gap: 44px; min-width: 0; }
+.block { display: grid; gap: 16px; min-width: 0; padding-top: 14px; border-top: 2px solid var(--ink); }
 .block-head { display: grid; gap: 6px; }
-.block-head p { color: var(--ink-2); max-width: 72ch; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 14px; padding-block: 12px; display: grid; gap: 2px; align-content: start; }
-.tile .label { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
-.tile .value { font-size: 26px; font-weight: 700; line-height: 1.2; }
-.tile .value small { font-size: 14px; font-weight: 400; color: var(--ink-2); }
-.tile .sub { font-size: 13px; color: var(--ink-2); }
-.swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
-.grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; }
-@media (max-width: 1100px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 16px; padding-block: 14px; display: grid; gap: 10px; min-width: 0; }
-.card-head { display: grid; gap: 2px; }
-.card-head p { font-size: 13px; color: var(--ink-2); }
+.block-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 30px; line-height: 1.05; letter-spacing: 0.005em; }
+.block-head p { max-width: 72ch; color: var(--ink-2); }
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.cell { display: grid; gap: 3px; align-content: start; min-width: 0; padding-inline: 14px; padding-block: 12px 14px; background: var(--surface); }
+.cell-label { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.cell-value { font-family: var(--font-mono); font-size: 26px; font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.cell-value small { margin-left: 2px; font-family: var(--font-body); font-size: 12.5px; font-weight: 400; color: var(--ink-2); }
+.cell-sub { font-size: 12.5px; color: var(--ink-2); }
+.swatch { display: inline-block; flex: none; width: 10px; height: 10px; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+.panel { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; padding-inline: 16px; padding-block: 14px 16px; background: var(--surface); border: 1px solid var(--rule); }
+.panel-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; }
+.panel-tag { display: grid; place-items: center; width: 22px; height: 22px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; background: var(--control); color: var(--control-ink); }
+.panel-text { display: grid; gap: 2px; }
+.panel-title { font-size: 14.5px; font-weight: 600; line-height: 1.3; }
+.panel-note { font-size: 12.5px; color: var(--ink-2); }
 .plot { position: relative; min-width: 0; }
 .plot canvas { display: block; width: 100%; }
 .plot svg { display: block; width: 100%; height: auto; overflow: visible; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend .key { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+.legend .key { display: inline-block; width: 18px; height: 3px; }
 .rampbar { display: grid; gap: 4px; }
-.rampbar .bar { height: 10px; border-radius: 3px; }
-.rampbar .scale { position: relative; height: 16px; font-size: 11px; color: var(--ink-2); }
+.rampbar .bar { height: 10px; }
+.rampbar .scale { position: relative; height: 16px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); }
 .rampbar .scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 .rampbar .scale span:first-child { transform: none; }
 .rampbar .scale span:last-child { transform: translateX(-100%); }
 .rampbar .caption { font-size: 12px; color: var(--ink-2); }
-.note { font-size: 13px; color: var(--ink-2); max-width: 72ch; }
+.note { max-width: 72ch; font-size: 13px; color: var(--ink-2); }
 details { font-size: 13px; }
-details summary { cursor: pointer; color: var(--accent-ink); width: fit-content; }
+details summary { display: inline-flex; align-items: center; gap: 8px; width: fit-content; list-style: none; cursor: pointer; font-weight: 500; color: var(--link); }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: "+"; display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1px solid currentColor; font-family: var(--font-mono); font-size: 11px; line-height: 1; }
+details[open] summary::before { content: "\2212"; }
 .table-wrap { overflow-x: auto; margin-top: 8px; }
-table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 100%; }
-th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { font-weight: 700; color: var(--ink-2); }
+table { min-width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding-inline: 10px; padding-block: 7px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--rule); }
+th { font-size: 11.5px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-2); border-bottom-color: var(--axis); }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 td.num, th.num { text-align: right; }
-.status { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
 .status.pass { color: var(--good-ink); }
 .status.fail { color: var(--critical-ink); }
-.callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-.callout { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 14px; padding-block: 12px; display: grid; gap: 6px; align-content: start; }
+.findings { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 28px; }
+.callout { display: grid; gap: 6px; align-content: start; }
+.callout h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .callout p { font-size: 13.5px; color: var(--ink-2); }
-.callout strong { color: var(--ink); }
-.about { display: grid; gap: 10px; font-size: 14px; color: var(--ink-2); max-width: 78ch; }
-.about ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
-.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 6px 20px var(--shadow); border-radius: 8px; padding-inline: 10px; padding-block: 8px; font-size: 13px; line-height: 1.4; max-width: 260px; }
-.tip b { font-weight: 700; }
+.callout strong { font-family: var(--font-mono); font-weight: 500; color: var(--ink); }
+.about { display: grid; gap: 10px; max-width: 78ch; font-size: 14px; color: var(--ink-2); }
+.about ul { display: grid; gap: 6px; margin: 0; padding-left: 18px; }
+.tip { position: fixed; z-index: 20; pointer-events: none; max-width: 280px; padding-inline: 10px; padding-block: 8px; font-size: 12.5px; line-height: 1.45; background: var(--ink); color: var(--surface); box-shadow: 0 6px 18px var(--shadow); }
+.tip b { font-weight: 600; }
 .tip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tip .swatch { box-shadow: 0 0 0 1px var(--surface); }
 .busy .readouts { opacity: 0.85; transition: opacity 120ms; }
 svg text { font-family: var(--font-body); }
-svg .tick { fill: var(--ink-2); font-size: 11px; }
-svg .axis-title { fill: var(--ink-2); font-size: 12px; }
-svg .direct { fill: var(--ink-2); font-size: 12px; }
-svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .tick { fill: var(--ink-2); font-family: var(--font-mono); font-size: 10.5px; }
+svg .axis-title { fill: var(--ink-2); font-size: 11.5px; }
+svg .direct { fill: var(--ink-2); font-size: 11.5px; }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
 svg .axis { stroke: var(--axis); stroke-width: 1; }
 svg .zone-rule { stroke: var(--axis); stroke-width: 1; }
 svg .crosshair { stroke: var(--ink-2); stroke-width: 1; }
 svg .leader { stroke: var(--axis); stroke-width: 1; }
+@media (max-width: 1120px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 940px) { .shell { grid-template-columns: minmax(0, 1fr); } .rail { position: static; max-height: none; } }
+@media (max-width: 760px) { .findings { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
 @media (prefers-reduced-motion: reduce) { .busy .readouts { transition: none; } }
 </style>
 
-<div class="page">
-  <header class="intro">
-    <p class="eyebrow">DIS 481 · UAV-applied CrleGV in citrus · 2D canopy slice</p>
-    <h1>CrleGV Canopy Explorer</h1>
-    <p class="lede">Change the drone, droplet and canopy settings to see where spray lands in a 4&nbsp;m × 3&nbsp;m slice of citrus canopy, and how long the virus stays viable in each zone. Every change reruns the model with 10,000 droplets.</p>
-    <div class="meta" id="meta"></div>
-  </header>
+<header class="band">
+  <div class="wrap band-inner">
+    <div>
+      <p class="band-kicker">DIS 481 · UAV-applied CrleGV in citrus</p>
+      <h1>CrleGV Canopy Explorer</h1>
+    </div>
+    <div class="band-meta" id="meta"></div>
+  </div>
+</header>
+
+<main class="wrap page">
+  <p class="lede">Move any setting to rerun the model. Each change sends 10,000 droplets from the drone into a 4&nbsp;m × 3&nbsp;m slice of citrus canopy, then follows how long the deposited virus stays viable in each zone.</p>
 
   <div class="shell">
-    <aside class="rail" aria-label="Settings">
-      <div>
-        <p class="rail-title" id="presets-title">Jump to</p>
-        <div class="presets" role="group" aria-labelledby="presets-title">
-          <button type="button" id="preset-central">Central</button>
-          <button type="button" id="preset-best">Best run</button>
-          <button type="button" id="preset-worst">Worst run</button>
+    <aside class="rail" aria-labelledby="h-settings">
+      <div class="rail-head">
+        <h2 id="h-settings">Settings</h2>
+        <div class="presets" role="group" aria-label="Presets">
+          <button type="button" id="preset-central" aria-pressed="true">Central</button>
+          <button type="button" id="preset-best" aria-pressed="false">Best run</button>
+          <button type="button" id="preset-worst" aria-pressed="false">Worst run</button>
         </div>
       </div>
       <fieldset id="group-drone"><legend>Drone</legend></fieldset>
-      <hr>
       <fieldset id="group-droplets"><legend>Droplets</legend></fieldset>
-      <hr>
-      <fieldset id="group-canopy"><legend>Canopy</legend><p class="group-note">Held at the central values in the 81-run study.</p></fieldset>
-      <hr>
-      <fieldset id="group-virus"><legend>Time and virus</legend><p class="group-note">The half-lives are what-if settings; the study uses 24 h and 72 h.</p></fieldset>
+      <fieldset id="group-canopy"><legend>Canopy</legend><p class="group-note">What-if only. The 81-run study held these at their central values.</p></fieldset>
+      <fieldset id="group-virus"><legend>Time and virus</legend><p class="group-note">The study uses half-lives of 24&nbsp;h in full sun and 72&nbsp;h in full shade.</p></fieldset>
     </aside>
 
-    <main class="readouts">
+    <div class="readouts">
       <section class="block" aria-labelledby="h-spray">
         <div class="block-head">
           <h2 id="h-spray">Where the spray lands</h2>
-          <p>Deposit per square metre of the canopy slice, in droplet equivalents. The outer zone is the top metre, the mid zone the next, and the inner zone the bottom metre.</p>
+          <p>Deposit per square metre, in droplet equivalents. The outer zone is the top metre of the canopy, the mid zone the next metre and the inner zone the bottom metre.</p>
         </div>
-        <div class="tiles" id="spray-tiles"></div>
+        <div class="strip" id="spray-tiles"></div>
         <div class="grid-2">
-          <div class="card">
-            <div class="card-head">
-              <h3>Deposit across the canopy</h3>
-              <p>Log scale. Lines mark the zones; circles are fruit.</p>
-            </div>
+          <figure class="panel">
+            <figcaption class="panel-head"><span class="panel-tag" aria-hidden="true">A</span><span class="panel-text"><span class="panel-title">Deposit across the canopy</span><span class="panel-note">Log scale. Lines mark the zones; circles are fruit.</span></span></figcaption>
             <div class="plot" id="map-deposit"></div>
             <div class="rampbar" id="ramp-deposit"></div>
-          </div>
-          <div class="card">
-            <div class="card-head">
-              <h3>Deposit by depth</h3>
-              <p>Row averages, compared with the central settings.</p>
-            </div>
+          </figure>
+          <figure class="panel">
+            <figcaption class="panel-head"><span class="panel-tag" aria-hidden="true">B</span><span class="panel-text"><span class="panel-title">Deposit by depth</span><span class="panel-note">Row averages, compared with the central settings.</span></span></figcaption>
             <div class="legend" id="legend-profile"></div>
             <div class="plot" id="chart-profile"></div>
             <details>
-              <summary>Show the zone values</summary>
+              <summary>Zone values</summary>
               <div class="table-wrap" id="table-profile"></div>
             </details>
-          </div>
+          </figure>
         </div>
       </section>
 
@@ -244,28 +271,22 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
           <h2 id="h-virus">How long the virus stays viable</h2>
           <p id="virus-lede">Mean viable fraction of the deposited CrleGV in each zone.</p>
         </div>
-        <div class="tiles" id="virus-tiles"></div>
+        <div class="strip" id="virus-tiles"></div>
         <div class="grid-2">
-          <div class="card">
-            <div class="card-head">
-              <h3 id="map-virus-title">Viable fraction across the canopy</h3>
-              <p>Log scale. Outlined cells get 10% or less of the UV at the canopy top (refuges).</p>
-            </div>
+          <figure class="panel">
+            <figcaption class="panel-head"><span class="panel-tag" aria-hidden="true">C</span><span class="panel-text"><span class="panel-title" id="map-virus-title">Viable fraction across the canopy</span><span class="panel-note">Log scale. Outlined cells get 10% or less of the UV at the canopy top (refuges).</span></span></figcaption>
             <div class="plot" id="map-virus"></div>
             <div class="rampbar" id="ramp-virus"></div>
-          </div>
-          <div class="card">
-            <div class="card-head">
-              <h3>Viability over three weeks</h3>
-              <p>Log scale; the vertical line is the selected time.</p>
-            </div>
+          </figure>
+          <figure class="panel">
+            <figcaption class="panel-head"><span class="panel-tag" aria-hidden="true">D</span><span class="panel-text"><span class="panel-title">Viability over three weeks</span><span class="panel-note">Log scale; the vertical line is the selected time.</span></span></figcaption>
             <div class="legend" id="legend-curves"></div>
             <div class="plot" id="chart-curves"></div>
             <details>
-              <summary>Show the values at key times</summary>
+              <summary>Values at key times</summary>
               <div class="table-wrap" id="table-curves"></div>
             </details>
-          </div>
+          </figure>
         </div>
         <p class="note">The drone settings don't change these numbers. Survival depends only on how much UV reaches each cell, and every cell receives some spray at these settings.</p>
       </section>
@@ -273,35 +294,29 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
       <section class="block" aria-labelledby="h-study">
         <div class="block-head">
           <h2 id="h-study">What the 81-run study found</h2>
-          <p>Every combination of three heights, speeds, downwash values and droplet sizes, ranked by inner-canopy deposit. These charts use the saved study results; the marker shows your current setting.</p>
+          <p>Every combination of three heights, speeds, downwash values and droplet radii, ranked by inner-canopy deposit. Panels E and F use the saved study results; the markers show your current setting.</p>
         </div>
-        <div class="callouts" id="study-callouts"></div>
-        <div class="card">
-          <div class="card-head">
-            <h3>Effect of each setting on inner-canopy deposit</h3>
-            <p>Average over the 27 runs at each level, as a percentage above or below the mean of all 81 runs.</p>
-          </div>
-          <div class="plot" id="chart-effects"></div>
-          <details>
-            <summary>Show the level averages</summary>
-            <div class="table-wrap" id="table-effects"></div>
-          </details>
-        </div>
-        <div class="card">
-          <div class="card-head">
-            <h3>Where the variation comes from</h3>
-            <p>Share of the variation in inner-canopy deposit across the 81 runs. Grey bars are combinations of settings.</p>
-          </div>
-          <div class="plot" id="chart-shares"></div>
-        </div>
+        <div class="panel findings" id="study-callouts"></div>
+          <figure class="panel">
+            <figcaption class="panel-head"><span class="panel-tag" aria-hidden="true">E</span><span class="panel-text"><span class="panel-title">Effect of each setting on inner-canopy deposit</span><span class="panel-note">Average over the 27 runs at each level, as a percentage above or below the mean of all 81 runs.</span></span></figcaption>
+            <div class="plot" id="chart-effects"></div>
+            <details>
+              <summary>Level averages</summary>
+              <div class="table-wrap" id="table-effects"></div>
+            </details>
+          </figure>
+          <figure class="panel">
+            <figcaption class="panel-head"><span class="panel-tag" aria-hidden="true">F</span><span class="panel-text"><span class="panel-title">Where the variation comes from</span><span class="panel-note">Share of the variation in inner-canopy deposit across the 81 runs. Grey bars are combinations of settings.</span></span></figcaption>
+            <div class="plot" id="chart-shares"></div>
+          </figure>
       </section>
 
       <section class="block" aria-labelledby="h-validation">
         <div class="block-head">
           <h2 id="h-validation">How the model was checked</h2>
-          <p>Four targets declared before the model was run, at the central settings.</p>
+          <p>Four targets, declared before the model was run and tested at the central settings.</p>
         </div>
-        <div class="card">
+        <div class="panel">
           <div class="table-wrap" id="table-validation"></div>
         </div>
       </section>
@@ -312,11 +327,11 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
         </div>
         <div class="about" id="about"></div>
       </section>
-    </main>
+    </div>
   </div>
-</div>
+</main>
 <div class="tip" id="tip" hidden></div>
-<noscript><p class="page">This page needs JavaScript to run the model.</p></noscript>
+<noscript><p class="wrap">This page needs JavaScript to run the model.</p></noscript>
 
 <script id="crlegv-data" type="application/json">{"params":{"r_p":0.0005,"rho_p":1000.0,"rho_a":1.225,"mu_a":1.81e-05,"g":9.81,"LAI":2.8,"k":0.575,"tau":0.1,"T_half_exposed":24.0,"T_half_shaded":72.0,"LC50":22900.0,"T":25.0,"h_uav":1.25,"v_uav":3.0,"v_dw":8.5,"L_x":4.0,"L_z":3.0,"dx":0.05,"dt":0.01,"N":10000,"eta":1.0,"k_fruit":12.0,"r_fruit":0.04,"tau_fruit":3.0,"s_fruit":0.55,"L_dw":0.5,"FRUIT_FIRST_X_M":0.35,"FRUIT_ROW_DEPTHS_M":[0.45,0.95,1.45]},"levels":{"h_uav":[0.5,1.25,2.0],"v_uav":[1.0,3.0,4.0],"v_dw":[6.5,8.5,10.0],"r_p":[0.0003,0.0005,0.0008],"r_p_mm":[0.3,0.5,0.8]},"ranges":{"LAI":[2.0,2.8,3.6],"k":[0.55,0.575,0.6]},"runs":[[0.5,1.0,6.5,0.3,1700.6953425752038,521.2669310829261,168.10915477082668,0.04397142862842074],[0.5,1.0,6.5,0.5,1700.1030984908518,527.7508635841815,164.68253489441446,0.04298540121222409],[0.5,1.0,6.5,0.8,1710.8595887531885,529.1847917319354,157.02970499359486,0.041170365808510405],[0.5,1.0,8.5,0.3,1714.7749601255682,504.06588861123566,171.04829555203762,0.0440443422844586],[0.5,1.0,8.5,0.5,1683.6400356326421,540.2433546943984,165.86689158956486,0.044099887233354645],[0.5,1.0,8.5,0.8,1692.3453285695591,536.6855815928423,165.59687879468956,0.0421488844171595],[0.5,1.0,10.0,0.3,1696.6959733265476,525.2668568332692,168.22110700364786,0.0439264251346144],[0.5,1.0,10.0,0.5,1704.331136517702,525.8142899691272,163.02648841258886,0.04273123404023636],[0.5,1.0,10.0,0.8,1719.435860749687,513.354135646125,162.6142145108811,0.041838315637328906],[0.5,3.0,6.5,0.3,1709.4652514576314,522.6549929338693,161.98798689220118,0.04235670748651744],[0.5,3.0,6.5,0.5,1733.986265967817,522.8406168098044,148.65370671081112,0.03780776420462635],[0.5,3.0,6.5,0.8,1746.724377509554,511.743333522143,148.5261139755077,0.037202469997117835],[0.5,3.0,8.5,0.3,1714.6368265698397,523.0935681685792,160.15766264394333,0.040844777047056115],[0.5,3.0,8.5,0.5,1725.417830015323,523.1067813193314,154.65969933268215,0.038726275733061595],[0.5,3.0,8.5,0.8,1724.026596967747,530.4219879473254,151.0491576333541,0.0378009029806248],[0.5,3.0,10.0,0.3,1723.8538943344515,518.2710996034247,156.05123839139438,0.04072950706828878],[0.5,3.0,10.0,0.5,1726.64507372029,524.3871602517739,152.3854633290363,0.03863292107956114],[0.5,3.0,10.0,0.8,1746.8630273587655,507.9707806936349,149.51104629683124,0.038262058260307506],[0.5,4.0,6.5,0.3,1724.5677680822082,522.7534615872239,153.56059635890088,0.039647269588667544],[0.5,4.0,6.5,0.5,1757.5254655073604,509.9742491006805,143.72519855625413,0.03551003473427849],[0.5,4.0,6.5,0.8,1765.4206741049647,510.37880135804045,139.95966066874522,0.0336963455472994],[0.5,4.0,8.5,0.3,1714.7825142038582,529.895735711986,155.92426088032627,0.039758995681526556],[0.5,4.0,8.5,0.5,1769.5158881519149,496.5765600429749,143.67576249847562,0.03609271572265213],[0.5,4.0,8.5,0.8,1746.2842347325945,512.9648647011293,148.59478536558535,0.03686244608027444],[0.5,4.0,10.0,0.3,1736.5527186445097,511.1873301590772,152.67276421658798,0.03983487479192856],[0.5,4.0,10.0,0.5,1765.470512360923,494.66149513766834,146.5272653197955,0.037336290872647615],[0.5,4.0,10.0,0.8,1766.3167985768875,498.27603077278354,145.63711770133366,0.035908021179600236],[1.25,1.0,6.5,0.3,1698.8854027970037,516.1014005330329,173.48976738509793,0.044609371713951865],[1.25,1.0,6.5,0.5,1716.1359711594682,513.3730644795561,163.30026455733386,0.04287627992145719],[1.25,1.0,6.5,0.8,1705.4883650549714,528.5557670987895,160.21325774512533,0.0422970440404416],[1.25,1.0,8.5,0.3,1689.715025287977,522.5501036523879,173.6392958611441,0.04563823007939929],[1.25,1.0,8.5,0.5,1698.249933317558,529.7174905882781,165.8296447589435,0.04248117253408979],[1.25,1.0,8.5,0.8,1710.5535489499186,523.2041755917314,160.51990227194264,0.042288949274567576],[1.25,1.0,10.0,0.3,1697.0297285680945,519.0434325665905,170.74315337048836,0.04527347419793385],[1.25,1.0,10.0,0.5,1688.5596030477946,533.3984220350236,167.44846789494085,0.044237402808898756],[1.25,1.0,10.0,0.8,1699.1494090237643,529.4076260685223,163.82079510355598,0.0430488679216607],[1.25,3.0,6.5,0.3,1703.2372376205549,536.9918485208196,156.75133780435257,0.04120783042170195],[1.25,3.0,6.5,0.5,1712.7374407838745,537.5018682866297,152.2032822935109,0.0390229634543951],[1.25,3.0,6.5,0.8,1734.4973798279166,518.2854856900727,151.2751732362405,0.03837678449830803],[1.25,3.0,8.5,0.3,1694.6585485203013,538.7201381343503,163.28676859920952,0.04133381789845733],[1.25,3.0,8.5,0.5,1720.6813666073642,525.3231922433888,154.588608125458,0.03976273320951028],[1.25,3.0,8.5,0.8,1727.389867944145,524.5349713226369,152.288949119492,0.03831448464549272],[1.25,3.0,10.0,0.3,1717.2618964052087,524.5759473199812,157.64954055218524,0.0402050462890484],[1.25,3.0,10.0,0.5,1737.9074920497324,504.36501775478945,157.24182794235892,0.04019426490124856],[1.25,3.0,10.0,0.8,1719.9033907404728,525.7152180078583,155.82840737053962,0.039421193552449565],[1.25,4.0,6.5,0.3,1727.0966561219257,517.5840283019103,154.09315000152725,0.040490466229857705],[1.25,4.0,6.5,0.5,1747.500659611182,505.6732906397236,150.50768095885275,0.03852734751609956],[1.25,4.0,6.5,0.8,1755.1681082187636,512.9580935231476,144.13160456831713,0.03509687747591262],[1.25,4.0,8.5,0.3,1698.224922140688,541.3884474257719,157.77977185880454,0.041042743429887944],[1.25,4.0,8.5,0.5,1739.2870586268918,514.2670218362356,150.09577797428122,0.03854005662503897],[1.25,4.0,8.5,0.8,1744.6851541422875,514.4213020579134,148.57068306235135,0.03692914429498046],[1.25,4.0,10.0,0.3,1721.2194672155929,522.5406874365575,156.49899815738019,0.039896338876183976],[1.25,4.0,10.0,0.5,1748.4907320238012,509.3718328571261,147.90737666857353,0.03769202338019856],[1.25,4.0,10.0,0.8,1734.5909742146864,518.6466296550129,153.26202250330618,0.03740014945079754],[2.0,1.0,6.5,0.3,1706.9952207252072,502.7729377742677,177.62546473382625,0.04504255070667757],[2.0,1.0,6.5,0.5,1712.1685177086792,510.89501418584734,167.68333538169261,0.04370125308951395],[2.0,1.0,6.5,0.8,1707.168660505267,521.5170314341538,165.08141312351583,0.04249315797482772],[2.0,1.0,8.5,0.3,1695.3104108806042,508.9251060122463,181.23607460472041,0.04581136340096723],[2.0,1.0,8.5,0.5,1708.4072892636393,512.2466377476658,168.19465325257505,0.04446056789445269],[2.0,1.0,8.5,0.8,1706.1688095144987,515.7497286634014,169.43895811060614,0.04345700148460295],[2.0,1.0,10.0,0.3,1671.231055216657,536.2717175003944,177.1383948021081,0.046143532992340044],[2.0,1.0,10.0,0.5,1715.810615183243,505.20783943943127,169.57589134569034,0.04376226161266073],[2.0,1.0,10.0,0.8,1700.9492657632825,520.6342813475557,168.5832282638344,0.04393328985013283],[2.0,3.0,6.5,0.3,1696.9100367771375,527.7521055750991,167.09855665756672,0.04329572039608075],[2.0,3.0,6.5,0.5,1721.049204378197,520.9800482940974,157.65031297282312,0.04012817374194777],[2.0,3.0,6.5,0.8,1720.9867524276146,523.9022456749709,155.9568519375057,0.039661659983957286],[2.0,3.0,8.5,0.3,1683.536174447046,540.1989342571078,167.5798964616054,0.04347399793368955],[2.0,3.0,8.5,0.5,1710.4171443603454,521.2926472710183,165.38546349118488,0.04116189795097583],[2.0,3.0,8.5,0.8,1725.1630322585793,528.2468012221682,150.3799964903274,0.038484068011565835],[2.0,3.0,10.0,0.3,1711.3250504788966,520.3095347285429,162.63953103941097,0.042290353501259696],[2.0,3.0,10.0,0.5,1726.2324961784097,521.7340525345224,153.30597405383395,0.03949099089329404],[2.0,3.0,10.0,0.8,1717.900896999236,524.6813593564053,158.12705996257253,0.039716273472717015],[2.0,4.0,6.5,0.3,1734.5269321753374,499.06422633324473,161.73571963507428,0.041869248742538646],[2.0,4.0,6.5,0.5,1711.9655887605095,527.2752831196984,159.41889252871093,0.04053609423643302],[2.0,4.0,6.5,0.8,1725.8190739771685,527.3303202363855,151.5407408201203,0.03812394598652623],[2.0,4.0,8.5,0.3,1700.041683847199,531.4185088747674,162.94386864923334,0.04223837545152044],[2.0,4.0,8.5,0.5,1717.2231263473932,529.5574984659316,154.0047624756942,0.03968584508439043],[2.0,4.0,8.5,0.8,1752.694916630191,506.04217555149825,147.1718210431974,0.0376364347100489],[2.0,4.0,10.0,0.3,1713.1917137352616,525.794198159589,158.22771719816592,0.04111454836278953],[2.0,4.0,10.0,0.5,1716.9857346016922,526.5870011941528,156.13815806632095,0.04011564245513549],[2.0,4.0,10.0,0.8,1719.727684401811,530.8205701256256,153.2027285601698,0.038499606764953405]],"effects":{"grand":158.63562632964707,"higher":0.05101818774083777,"main":{"h_uav":{"levels":[0.5,1.25,2.0],"means":[155.5353613812597,157.88761147204866,162.48390613563285],"share":0.10978422979267582,"S":0.03667453011665032},"v_uav":{"levels":[1.0,3.0,4.0],"means":[167.7687864107181,156.3785041968866,151.7595883813365],"share":0.5967673541394194,"S":-0.10237467170823805},"v_dw":{"levels":[6.5,8.5,10.0],"means":[157.62931348749814,159.61141816671963,158.66614733472343],"share":0.008639171636909658,"S":0.01577597070728977},"r_p":{"levels":[0.0003,0.0005,0.0008],"means":[163.99592866969508,157.17345871801493,154.7374916012312],"share":0.2024523302089867,"S":-0.058905855632244174}},"inter":{"v_dw x r_p":0.01596749615699853,"h_uav x v_dw":0.007064785084426337,"h_uav x r_p":0.003059712545277255,"h_uav x v_uav":0.0027225343842768924,"v_uav x v_dw":0.0020370273704347947,"v_uav x r_p":0.0004871709397568094}},"check":{"deposit_sum":9602.372667904847,"inner_per_m2":154.588608125458,"outer_per_m2":1720.6813666073642,"escaped":0.03976273320951028,"refuge_cells":1001,"micro_cells":147,"fruit_cells":70,"uv_sum":1989.3389824803603,"viable":{"24.0":{"outer":0.5761069387974159,"mid":0.6820122536272578,"inner":0.7259717872713876,"microhabitat":0.7857061592255132},"72.0":{"outer":0.201611714134167,"mid":0.32630771641355616,"inner":0.3863262020117338,"microhabitat":0.4851062662715259}}},"validation":{"t1":{"tolerance":0.2,"rows":[{"d":0.6,"measured":2.47,"simulated":2.207,"dev":-0.1064,"ok":true},{"d":1.0,"measured":4.03,"simulated":4.107,"dev":0.0191,"ok":true},{"d":1.6,"measured":5.65,"simulated":5.845,"dev":0.0346,"ok":true}]},"t2":{"field":[0.318,0.735],"ratio":0.08984,"band":[0.254,0.882],"ok":false},"t3":{"value":0.5761,"band":[0.4,0.6],"ok":true},"t4":{"ratio":4.25,"band":[1.5,150.0],"ok":true}},"commit":"5041120","built":"30 Sep 2026"}</script>
 
@@ -506,7 +521,7 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
   var M = window.CrleGV;
   var $ = function (sel) { return document.querySelector(sel); };
   if (!DATA) {
-    $("#meta").innerHTML = '<span class="chip bad"><span class="icon">✕</span>Model data missing — rebuild the page with src/explorer.py</span>';
+    $("#meta").innerHTML = '<span class="check bad"><span class="icon">✕</span>Model data missing. Rebuild the page with src/explorer.py.</span>';
     return;
   }
   var P = DATA.params;
@@ -526,19 +541,20 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
 
   var L = DATA.levels;
   var CONTROLS = [
-    { id: "h", group: "drone", label: "Height above canopy", unit: "m", min: L.h_uav[0], max: L.h_uav[2], step: 0.05, digits: 2, marks: L.h_uav, study: true },
-    { id: "v", group: "drone", label: "Flight speed", unit: "m/s", min: L.v_uav[0], max: L.v_uav[2], step: 0.1, digits: 1, marks: L.v_uav, study: true },
-    { id: "dw", group: "drone", label: "Downwash", unit: "m/s", min: L.v_dw[0], max: L.v_dw[2], step: 0.1, digits: 1, marks: L.v_dw, study: true },
-    { id: "rp", group: "droplets", label: "Droplet radius", unit: "mm", min: L.r_p_mm[0], max: L.r_p_mm[2], step: 0.01, digits: 2, marks: L.r_p_mm, study: true },
-    { id: "lai", group: "canopy", label: "Leaf area index", unit: "", min: DATA.ranges.LAI[0], max: DATA.ranges.LAI[2], step: 0.1, digits: 1, marks: DATA.ranges.LAI, study: false },
-    { id: "k", group: "canopy", label: "UV extinction coefficient", unit: "", min: DATA.ranges.k[0], max: DATA.ranges.k[2], step: 0.005, digits: 3, marks: DATA.ranges.k, study: false },
-    { id: "t", group: "virus", label: "Time after spraying", unit: "h", min: 0, max: 504, step: 6, digits: 0, marks: [24, 72, 504], study: false },
-    { id: "hlE", group: "virus", label: "Half-life in full sun", unit: "h", min: 6, max: 96, step: 1, digits: 0, marks: [P.T_half_exposed], study: false },
-    { id: "hlS", group: "virus", label: "Half-life in full shade", unit: "h", min: 24, max: 336, step: 6, digits: 0, marks: [P.T_half_shaded], study: false }
+    { id: "h", group: "drone", label: "Height above canopy", sym: "h<sub>uav</sub>", unit: "m", min: L.h_uav[0], max: L.h_uav[2], step: 0.05, digits: 2, marks: L.h_uav, study: true },
+    { id: "v", group: "drone", label: "Flight speed", sym: "v<sub>uav</sub>", unit: "m/s", min: L.v_uav[0], max: L.v_uav[2], step: 0.1, digits: 1, marks: L.v_uav, study: true },
+    { id: "dw", group: "drone", label: "Downwash", sym: "v<sub>dw</sub>", unit: "m/s", min: L.v_dw[0], max: L.v_dw[2], step: 0.1, digits: 1, marks: L.v_dw, study: true },
+    { id: "rp", group: "droplets", label: "Droplet radius", sym: "r<sub>p</sub>", unit: "mm", min: L.r_p_mm[0], max: L.r_p_mm[2], step: 0.01, digits: 2, marks: L.r_p_mm, study: true },
+    { id: "lai", group: "canopy", label: "Leaf area index", sym: "LAI", unit: "", min: DATA.ranges.LAI[0], max: DATA.ranges.LAI[2], step: 0.1, digits: 1, marks: DATA.ranges.LAI, study: false },
+    { id: "k", group: "canopy", label: "UV extinction coefficient", sym: "k", unit: "", min: DATA.ranges.k[0], max: DATA.ranges.k[2], step: 0.005, digits: 3, marks: DATA.ranges.k, study: false },
+    { id: "t", group: "virus", label: "Time after spraying", sym: "t", unit: "h", min: 0, max: 504, step: 6, digits: 0, marks: [24, 72, 504], study: false },
+    { id: "hlE", group: "virus", label: "Half-life in full sun", sym: "T<sub>½</sub>", unit: "h", min: 6, max: 96, step: 1, digits: 0, marks: [P.T_half_exposed], study: false },
+    { id: "hlS", group: "virus", label: "Half-life in full shade", sym: "T<sub>½</sub>", unit: "h", min: 24, max: 336, step: 6, digits: 0, marks: [P.T_half_shaded], study: false }
   ];
   var CENTRAL = { h: P.h_uav, v: P.v_uav, dw: P.v_dw, rp: P.r_p * 1000, lai: P.LAI, k: P.k, t: 72, hlE: P.T_half_exposed, hlS: P.T_half_shaded };
   var state = Object.assign({}, CENTRAL);
   var model = {};
+  var PRESETS = {};
 
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function isDark() {
@@ -603,7 +619,7 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
         return '<span data-mark="' + m + '" style="left:' + left + '%">' + labelFor(c, m) + "</span>";
       }).join("");
       wrap.innerHTML =
-        '<div class="control-head"><label for="in-' + c.id + '">' + c.label + '</label><output id="out-' + c.id + '" for="in-' + c.id + '"></output></div>' +
+        '<div class="control-head"><label for="in-' + c.id + '">' + c.label + ' <span class="sym">' + c.sym + '</span></label><output id="out-' + c.id + '" for="in-' + c.id + '"></output></div>' +
         '<input type="range" id="in-' + c.id + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '" value="' + state[c.id] + '">' +
         '<div class="ticks" aria-hidden="true">' + ticks + "</div>" +
         '<div class="tag" id="tag-' + c.id + '"></div>';
@@ -623,10 +639,13 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
   function setValue(c, v) {
     state[c.id] = snap(c, v);
     syncControl(c);
+    syncPresets();
   }
   function syncControl(c) {
     var v = state[c.id];
-    $("#in-" + c.id).value = v;
+    var input = $("#in-" + c.id);
+    input.value = v;
+    input.style.setProperty("--fill", ((v - c.min) / (c.max - c.min) * 100) + "%");
     var shown = c.id === "t" ? hoursLabel(v) : (+v.toFixed(c.digits)) + (c.unit ? " " + c.unit : "");
     $("#out-" + c.id).textContent = shown;
     var tag = "";
@@ -642,7 +661,14 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
       s.classList.toggle("on", sameNumber(+s.getAttribute("data-mark"), v));
     });
   }
-  function syncAll() { CONTROLS.forEach(syncControl); }
+  function syncAll() { CONTROLS.forEach(syncControl); syncPresets(); }
+  function syncPresets() {
+    Object.keys(PRESETS).forEach(function (id) {
+      var p = PRESETS[id];
+      var on = Object.keys(p).every(function (key) { return sameNumber(state[key], p[key]); });
+      $("#" + id).setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
 
   function radiusMetres(mm) {
     for (var i = 0; i < L.r_p_mm.length; i++) if (sameNumber(mm, L.r_p_mm[i])) return L.r_p[i];
@@ -711,15 +737,13 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
   function renderMeta() {
     var ok = !model.checkProblems.length;
     var check = ok
-      ? '<span class="chip good"><span class="icon" aria-hidden="true">✓</span>Live model matches the saved Python run</span>'
-      : '<span class="chip bad"><span class="icon" aria-hidden="true">✕</span>Live model differs from the saved run: ' + model.checkProblems.join(", ") + "</span>";
-    $("#meta").innerHTML = check +
-      '<span class="chip">Model version ' + DATA.commit + "</span>" +
-      '<span class="chip">Study results from ' + DATA.built + "</span>";
+      ? '<span class="check good"><span class="icon" aria-hidden="true">✓</span>Live model matches the saved Python run</span>'
+      : '<span class="check bad"><span class="icon" aria-hidden="true">✕</span>Live model differs from the saved run: ' + model.checkProblems.join(", ") + "</span>";
+    $("#meta").innerHTML = '<span class="meta-item">Model ' + DATA.commit + '</span><span class="meta-item">81-run study ' + DATA.built + "</span>" + check;
   }
 
   function tile(label, value, sub, swatch) {
-    return '<div class="tile"><div class="label">' + (swatch ? '<span class="swatch" style="background:var(' + swatch + ')"></span>' : "") + label + '</div><div class="value">' + value + '</div><div class="sub">' + sub + "</div></div>";
+    return '<div class="cell"><div class="cell-label">' + (swatch ? '<span class="swatch" style="background:var(' + swatch + ')"></span>' : "") + label + '</div><div class="cell-value">' + value + '</div><div class="cell-sub">' + sub + "</div></div>";
   }
   function studyRun() {
     if (!sameNumber(state.lai, CENTRAL.lai) || !sameNumber(state.k, CENTRAL.k)) return null;
@@ -749,7 +773,7 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
       tile("Inner canopy", fmt1.format(s.inner) + " <small>per m²</small>", deltaText + rank) +
       tile("Outer canopy", fmt0.format(s.outer) + " <small>per m²</small>", "Mid canopy " + fmt0.format(s.mid) + " per m²") +
       tile("Inner ÷ outer", fmt3.format(ratio), ratioSub) +
-      tile("Passes through the canopy", pct(s.escaped), "Share of the spray leaving the canopy floor");
+      tile("Passes through", pct(s.escaped), "Share of the spray leaving the canopy floor");
   }
 
   function mapLayout(box) {
@@ -829,13 +853,14 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
       });
     }
     ctx.fillStyle = css("--ink-2");
-    ctx.font = "11px " + css("--font-body");
+    ctx.font = "10.5px " + css("--font-mono");
     ctx.textBaseline = "middle";
     ctx.textAlign = "right";
     for (var d = 0; d <= cv.depth + 1e-9; d += 1) ctx.fillText(d + " m", lay.m.l - 6, Z(d));
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     for (var x = 0; x <= cv.width + 1e-9; x += 1) ctx.fillText(x + " m", X(x), lay.m.t + lay.ph + 6);
+    ctx.font = "11.5px " + css("--font-body");
     ctx.fillText("Position across the row", lay.m.l + lay.pw / 2, lay.m.t + lay.ph + 20);
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
@@ -1101,7 +1126,7 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
     rows.push({ label: "Three or more settings", v: E.higher * 100, token: "--muted" });
     rows.sort(function (a, b) { return b.v - a.v; });
     var rowH = 30;
-    var c = chartBox("#chart-shares", rows.length * rowH + 30);
+    var c = chartBox("#chart-shares", rows.length * rowH + 12);
     c.root.setAttribute("aria-label", "Share of variation in inner-canopy deposit by setting");
     var m = { l: 170, r: 56, t: 6, b: 24 };
     var maxV = Math.max.apply(null, rows.map(function (r) { return r.v; }));
@@ -1192,9 +1217,11 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
   renderAbout();
   renderAll();
   var runState = function (r) { return { h: r[0], v: r[1], dw: r[2], rp: r[3], lai: CENTRAL.lai, k: CENTRAL.k }; };
-  $("#preset-central").addEventListener("click", function () { applyPreset({ h: CENTRAL.h, v: CENTRAL.v, dw: CENTRAL.dw, rp: CENTRAL.rp, lai: CENTRAL.lai, k: CENTRAL.k }); });
-  $("#preset-best").addEventListener("click", function () { applyPreset(runState(extremes.best)); });
-  $("#preset-worst").addEventListener("click", function () { applyPreset(runState(extremes.worst)); });
+  PRESETS["preset-central"] = { h: CENTRAL.h, v: CENTRAL.v, dw: CENTRAL.dw, rp: CENTRAL.rp, lai: CENTRAL.lai, k: CENTRAL.k };
+  PRESETS["preset-best"] = runState(extremes.best);
+  PRESETS["preset-worst"] = runState(extremes.worst);
+  Object.keys(PRESETS).forEach(function (id) { $("#" + id).addEventListener("click", function () { applyPreset(PRESETS[id]); }); });
+  syncPresets();
   var redraw = function () { renderDepositMap(); renderVirus(); };
   if (window.matchMedia) {
     var mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -1210,5 +1237,6 @@ svg .leader { stroke: var(--axis); stroke-width: 1; }
       renderAll();
     }).observe($(".readouts"));
   }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderAll);
 })();
 </script>
