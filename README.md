@@ -18,6 +18,8 @@ See `02_Projects/DIS Final Submission - Action Plan.md` in the vault.
 | `src/sweep.py` | 81-run full factorial and its effect analysis (D5) |
 | `src/figures.py` | Figure set for the results chapter (W4.4) and the validation table, written to `figures/` |
 | `src/validate.py` | Validation targets against published data, written to `runs/validation/` |
+| `src/explorer.py` | Builds the data block of the explorer page from saved runs |
+| `explorer/index.html` | Interactive explorer that reruns a JavaScript copy of the model in the browser |
 | `validation/` | Sanity checks that must pass before any result is trusted |
 
 ## Run
@@ -29,6 +31,7 @@ PYTHONPATH=src python src/run.py
 PYTHONPATH=src python src/validate.py
 PYTHONPATH=src python src/sweep.py
 PYTHONPATH=src python src/figures.py
+PYTHONPATH=src python src/explorer.py
 ```
 
 ## Design decisions encoded here
@@ -87,3 +90,14 @@ instead, reproducing 24 h at full exposure and 72 h in full shade.
 
 **Air viscosity is missing from the parameter table.** The Reynolds number in
 the piecewise drag law needs it. Added to `params.py` as a standard value.
+
+## Explorer page
+
+`explorer/index.html` is one self-contained page for showing the model to
+others. Its spray and survival panels rerun a JavaScript copy of stages 1 to 3
+in the browser as the settings change; its study and validation panels show
+the saved runs. On opening, the page reruns the central settings and compares
+the result with the saved Python run, and says whether they match.
+`validation/test_explorer.py` checks the JavaScript copy against the Python
+model cell by cell and needs Node.js. After any new run, rebuild the page's
+data with `src/explorer.py`.

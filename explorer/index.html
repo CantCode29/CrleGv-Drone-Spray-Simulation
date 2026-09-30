@@ -1,0 +1,1214 @@
+<title>CrleGV Canopy Explorer</title>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap">
+<style>
+/* Layout: a field-instrument panel. The settings rail on the left drives every readout on the right; on narrow screens the rail sits above the readouts. */
+:root {
+  --bg: #f2f3ef;
+  --surface: #fcfcfb;
+  --surface-2: #eceee8;
+  --line: #e1e0d9;
+  --axis: #c3c2b7;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --context: #898781;
+  --zone-outer: #86b6ef;
+  --zone-mid: #2a78d6;
+  --zone-inner: #104281;
+  --zone-micro: #eb6834;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --critical: #d03b3b;
+  --critical-ink: #d03b3b;
+  --shadow: rgba(11, 11, 11, 0.12);
+  --font-display: "Bricolage Grotesque", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111311;
+    --surface: #1a1a19;
+    --surface-2: #242522;
+    --line: #2c2c2a;
+    --axis: #383835;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --accent: #3987e5;
+    --accent-ink: #86b6ef;
+    --context: #898781;
+    --zone-outer: #1c5cab;
+    --zone-mid: #5598e7;
+    --zone-inner: #b7d3f6;
+    --zone-micro: #d95926;
+    --good: #0ca30c;
+    --good-ink: #0ca30c;
+    --critical: #d03b3b;
+    --critical-ink: #e66767;
+    --shadow: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111311;
+  --surface: #1a1a19;
+  --surface-2: #242522;
+  --line: #2c2c2a;
+  --axis: #383835;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --accent: #3987e5;
+  --accent-ink: #86b6ef;
+  --context: #898781;
+  --zone-outer: #1c5cab;
+  --zone-mid: #5598e7;
+  --zone-inner: #b7d3f6;
+  --zone-micro: #d95926;
+  --good: #0ca30c;
+  --good-ink: #0ca30c;
+  --critical: #d03b3b;
+  --critical-ink: #e66767;
+  --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1260px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; letter-spacing: -0.01em; }
+h2 { font-size: 22px; line-height: 1.2; }
+h3 { font-size: 15px; font-family: var(--font-body); font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.lede { max-width: 68ch; color: var(--ink-2); font-size: 16px; }
+.intro { display: grid; gap: 10px; margin-bottom: 24px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--ink-2); }
+.chip .icon { font-weight: 700; }
+.chip.good .icon { color: var(--good-ink); }
+.chip.bad .icon { color: var(--critical-ink); }
+.shell { display: grid; grid-template-columns: minmax(270px, 320px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 16px; padding-block: 16px; display: grid; gap: 18px; }
+.readouts { display: grid; gap: 36px; min-width: 0; }
+@media (max-width: 920px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; max-height: none; }
+}
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 14px; }
+legend { font-family: var(--font-display); font-weight: 700; font-size: 15px; padding: 0; margin-bottom: 2px; }
+.group-note { font-size: 12.5px; color: var(--ink-2); margin-top: -8px; }
+.control { display: grid; gap: 4px; }
+.control-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.control-head label { font-size: 14px; }
+.control-head output { font-weight: 700; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.control input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+.ticks { position: relative; height: 18px; margin-inline: 8px; }
+.ticks span { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.ticks span::before { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--axis); margin: 0 auto 2px; }
+.ticks span.on { color: var(--ink); font-weight: 700; }
+.ticks span.on::before { background: var(--accent); }
+.tag { font-size: 12px; color: var(--ink-2); min-height: 16px; }
+.presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.rail-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+button { font: inherit; font-size: 13px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--axis); }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rail hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
+section.block { display: grid; gap: 14px; min-width: 0; }
+.block-head { display: grid; gap: 6px; }
+.block-head p { color: var(--ink-2); max-width: 72ch; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 14px; padding-block: 12px; display: grid; gap: 2px; align-content: start; }
+.tile .label { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.tile .value { font-size: 26px; font-weight: 700; line-height: 1.2; }
+.tile .value small { font-size: 14px; font-weight: 400; color: var(--ink-2); }
+.tile .sub { font-size: 13px; color: var(--ink-2); }
+.swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 1100px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 16px; padding-block: 14px; display: grid; gap: 10px; min-width: 0; }
+.card-head { display: grid; gap: 2px; }
+.card-head p { font-size: 13px; color: var(--ink-2); }
+.plot { position: relative; min-width: 0; }
+.plot canvas { display: block; width: 100%; }
+.plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .key { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+.rampbar { display: grid; gap: 4px; }
+.rampbar .bar { height: 10px; border-radius: 3px; }
+.rampbar .scale { position: relative; height: 16px; font-size: 11px; color: var(--ink-2); }
+.rampbar .scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.rampbar .scale span:first-child { transform: none; }
+.rampbar .scale span:last-child { transform: translateX(-100%); }
+.rampbar .caption { font-size: 12px; color: var(--ink-2); }
+.note { font-size: 13px; color: var(--ink-2); max-width: 72ch; }
+details { font-size: 13px; }
+details summary { cursor: pointer; color: var(--accent-ink); width: fit-content; }
+.table-wrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 700; color: var(--ink-2); }
+td.num, th.num { text-align: right; }
+.status { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.status.pass { color: var(--good-ink); }
+.status.fail { color: var(--critical-ink); }
+.callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.callout { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding-inline: 14px; padding-block: 12px; display: grid; gap: 6px; align-content: start; }
+.callout p { font-size: 13.5px; color: var(--ink-2); }
+.callout strong { color: var(--ink); }
+.about { display: grid; gap: 10px; font-size: 14px; color: var(--ink-2); max-width: 78ch; }
+.about ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 6px 20px var(--shadow); border-radius: 8px; padding-inline: 10px; padding-block: 8px; font-size: 13px; line-height: 1.4; max-width: 260px; }
+.tip b { font-weight: 700; }
+.tip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.busy .readouts { opacity: 0.85; transition: opacity 120ms; }
+svg text { font-family: var(--font-body); }
+svg .tick { fill: var(--ink-2); font-size: 11px; }
+svg .axis-title { fill: var(--ink-2); font-size: 12px; }
+svg .direct { fill: var(--ink-2); font-size: 12px; }
+svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .axis { stroke: var(--axis); stroke-width: 1; }
+svg .zone-rule { stroke: var(--axis); stroke-width: 1; }
+svg .crosshair { stroke: var(--ink-2); stroke-width: 1; }
+svg .leader { stroke: var(--axis); stroke-width: 1; }
+@media (prefers-reduced-motion: reduce) { .busy .readouts { transition: none; } }
+</style>
+
+<div class="page">
+  <header class="intro">
+    <p class="eyebrow">DIS 481 · UAV-applied CrleGV in citrus · 2D canopy slice</p>
+    <h1>CrleGV Canopy Explorer</h1>
+    <p class="lede">Change the drone, droplet and canopy settings to see where spray lands in a 4&nbsp;m × 3&nbsp;m slice of citrus canopy, and how long the virus stays viable in each zone. Every change reruns the model with 10,000 droplets.</p>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="shell">
+    <aside class="rail" aria-label="Settings">
+      <div>
+        <p class="rail-title" id="presets-title">Jump to</p>
+        <div class="presets" role="group" aria-labelledby="presets-title">
+          <button type="button" id="preset-central">Central</button>
+          <button type="button" id="preset-best">Best run</button>
+          <button type="button" id="preset-worst">Worst run</button>
+        </div>
+      </div>
+      <fieldset id="group-drone"><legend>Drone</legend></fieldset>
+      <hr>
+      <fieldset id="group-droplets"><legend>Droplets</legend></fieldset>
+      <hr>
+      <fieldset id="group-canopy"><legend>Canopy</legend><p class="group-note">Held at the central values in the 81-run study.</p></fieldset>
+      <hr>
+      <fieldset id="group-virus"><legend>Time and virus</legend><p class="group-note">The half-lives are what-if settings; the study uses 24 h and 72 h.</p></fieldset>
+    </aside>
+
+    <main class="readouts">
+      <section class="block" aria-labelledby="h-spray">
+        <div class="block-head">
+          <h2 id="h-spray">Where the spray lands</h2>
+          <p>Deposit per square metre of the canopy slice, in droplet equivalents. The outer zone is the top metre, the mid zone the next, and the inner zone the bottom metre.</p>
+        </div>
+        <div class="tiles" id="spray-tiles"></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <h3>Deposit across the canopy</h3>
+              <p>Log scale. Lines mark the zones; circles are fruit.</p>
+            </div>
+            <div class="plot" id="map-deposit"></div>
+            <div class="rampbar" id="ramp-deposit"></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <h3>Deposit by depth</h3>
+              <p>Row averages, compared with the central settings.</p>
+            </div>
+            <div class="legend" id="legend-profile"></div>
+            <div class="plot" id="chart-profile"></div>
+            <details>
+              <summary>Show the zone values</summary>
+              <div class="table-wrap" id="table-profile"></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="h-virus">
+        <div class="block-head">
+          <h2 id="h-virus">How long the virus stays viable</h2>
+          <p id="virus-lede">Mean viable fraction of the deposited CrleGV in each zone.</p>
+        </div>
+        <div class="tiles" id="virus-tiles"></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <h3 id="map-virus-title">Viable fraction across the canopy</h3>
+              <p>Log scale. Outlined cells get 10% or less of the UV at the canopy top (refuges).</p>
+            </div>
+            <div class="plot" id="map-virus"></div>
+            <div class="rampbar" id="ramp-virus"></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <h3>Viability over three weeks</h3>
+              <p>Log scale; the vertical line is the selected time.</p>
+            </div>
+            <div class="legend" id="legend-curves"></div>
+            <div class="plot" id="chart-curves"></div>
+            <details>
+              <summary>Show the values at key times</summary>
+              <div class="table-wrap" id="table-curves"></div>
+            </details>
+          </div>
+        </div>
+        <p class="note">The drone settings don't change these numbers. Survival depends only on how much UV reaches each cell, and every cell receives some spray at these settings.</p>
+      </section>
+
+      <section class="block" aria-labelledby="h-study">
+        <div class="block-head">
+          <h2 id="h-study">What the 81-run study found</h2>
+          <p>Every combination of three heights, speeds, downwash values and droplet sizes, ranked by inner-canopy deposit. These charts use the saved study results; the marker shows your current setting.</p>
+        </div>
+        <div class="callouts" id="study-callouts"></div>
+        <div class="card">
+          <div class="card-head">
+            <h3>Effect of each setting on inner-canopy deposit</h3>
+            <p>Average over the 27 runs at each level, as a percentage above or below the mean of all 81 runs.</p>
+          </div>
+          <div class="plot" id="chart-effects"></div>
+          <details>
+            <summary>Show the level averages</summary>
+            <div class="table-wrap" id="table-effects"></div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3>Where the variation comes from</h3>
+            <p>Share of the variation in inner-canopy deposit across the 81 runs. Grey bars are combinations of settings.</p>
+          </div>
+          <div class="plot" id="chart-shares"></div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="h-validation">
+        <div class="block-head">
+          <h2 id="h-validation">How the model was checked</h2>
+          <p>Four targets declared before the model was run, at the central settings.</p>
+        </div>
+        <div class="card">
+          <div class="table-wrap" id="table-validation"></div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="h-about">
+        <div class="block-head">
+          <h2 id="h-about">About this page</h2>
+        </div>
+        <div class="about" id="about"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+<noscript><p class="page">This page needs JavaScript to run the model.</p></noscript>
+
+<script id="crlegv-data" type="application/json">{"params":{"r_p":0.0005,"rho_p":1000.0,"rho_a":1.225,"mu_a":1.81e-05,"g":9.81,"LAI":2.8,"k":0.575,"tau":0.1,"T_half_exposed":24.0,"T_half_shaded":72.0,"LC50":22900.0,"T":25.0,"h_uav":1.25,"v_uav":3.0,"v_dw":8.5,"L_x":4.0,"L_z":3.0,"dx":0.05,"dt":0.01,"N":10000,"eta":1.0,"k_fruit":12.0,"r_fruit":0.04,"tau_fruit":3.0,"s_fruit":0.55,"L_dw":0.5,"FRUIT_FIRST_X_M":0.35,"FRUIT_ROW_DEPTHS_M":[0.45,0.95,1.45]},"levels":{"h_uav":[0.5,1.25,2.0],"v_uav":[1.0,3.0,4.0],"v_dw":[6.5,8.5,10.0],"r_p":[0.0003,0.0005,0.0008],"r_p_mm":[0.3,0.5,0.8]},"ranges":{"LAI":[2.0,2.8,3.6],"k":[0.55,0.575,0.6]},"runs":[[0.5,1.0,6.5,0.3,1700.6953425752038,521.2669310829261,168.10915477082668,0.04397142862842074],[0.5,1.0,6.5,0.5,1700.1030984908518,527.7508635841815,164.68253489441446,0.04298540121222409],[0.5,1.0,6.5,0.8,1710.8595887531885,529.1847917319354,157.02970499359486,0.041170365808510405],[0.5,1.0,8.5,0.3,1714.7749601255682,504.06588861123566,171.04829555203762,0.0440443422844586],[0.5,1.0,8.5,0.5,1683.6400356326421,540.2433546943984,165.86689158956486,0.044099887233354645],[0.5,1.0,8.5,0.8,1692.3453285695591,536.6855815928423,165.59687879468956,0.0421488844171595],[0.5,1.0,10.0,0.3,1696.6959733265476,525.2668568332692,168.22110700364786,0.0439264251346144],[0.5,1.0,10.0,0.5,1704.331136517702,525.8142899691272,163.02648841258886,0.04273123404023636],[0.5,1.0,10.0,0.8,1719.435860749687,513.354135646125,162.6142145108811,0.041838315637328906],[0.5,3.0,6.5,0.3,1709.4652514576314,522.6549929338693,161.98798689220118,0.04235670748651744],[0.5,3.0,6.5,0.5,1733.986265967817,522.8406168098044,148.65370671081112,0.03780776420462635],[0.5,3.0,6.5,0.8,1746.724377509554,511.743333522143,148.5261139755077,0.037202469997117835],[0.5,3.0,8.5,0.3,1714.6368265698397,523.0935681685792,160.15766264394333,0.040844777047056115],[0.5,3.0,8.5,0.5,1725.417830015323,523.1067813193314,154.65969933268215,0.038726275733061595],[0.5,3.0,8.5,0.8,1724.026596967747,530.4219879473254,151.0491576333541,0.0378009029806248],[0.5,3.0,10.0,0.3,1723.8538943344515,518.2710996034247,156.05123839139438,0.04072950706828878],[0.5,3.0,10.0,0.5,1726.64507372029,524.3871602517739,152.3854633290363,0.03863292107956114],[0.5,3.0,10.0,0.8,1746.8630273587655,507.9707806936349,149.51104629683124,0.038262058260307506],[0.5,4.0,6.5,0.3,1724.5677680822082,522.7534615872239,153.56059635890088,0.039647269588667544],[0.5,4.0,6.5,0.5,1757.5254655073604,509.9742491006805,143.72519855625413,0.03551003473427849],[0.5,4.0,6.5,0.8,1765.4206741049647,510.37880135804045,139.95966066874522,0.0336963455472994],[0.5,4.0,8.5,0.3,1714.7825142038582,529.895735711986,155.92426088032627,0.039758995681526556],[0.5,4.0,8.5,0.5,1769.5158881519149,496.5765600429749,143.67576249847562,0.03609271572265213],[0.5,4.0,8.5,0.8,1746.2842347325945,512.9648647011293,148.59478536558535,0.03686244608027444],[0.5,4.0,10.0,0.3,1736.5527186445097,511.1873301590772,152.67276421658798,0.03983487479192856],[0.5,4.0,10.0,0.5,1765.470512360923,494.66149513766834,146.5272653197955,0.037336290872647615],[0.5,4.0,10.0,0.8,1766.3167985768875,498.27603077278354,145.63711770133366,0.035908021179600236],[1.25,1.0,6.5,0.3,1698.8854027970037,516.1014005330329,173.48976738509793,0.044609371713951865],[1.25,1.0,6.5,0.5,1716.1359711594682,513.3730644795561,163.30026455733386,0.04287627992145719],[1.25,1.0,6.5,0.8,1705.4883650549714,528.5557670987895,160.21325774512533,0.0422970440404416],[1.25,1.0,8.5,0.3,1689.715025287977,522.5501036523879,173.6392958611441,0.04563823007939929],[1.25,1.0,8.5,0.5,1698.249933317558,529.7174905882781,165.8296447589435,0.04248117253408979],[1.25,1.0,8.5,0.8,1710.5535489499186,523.2041755917314,160.51990227194264,0.042288949274567576],[1.25,1.0,10.0,0.3,1697.0297285680945,519.0434325665905,170.74315337048836,0.04527347419793385],[1.25,1.0,10.0,0.5,1688.5596030477946,533.3984220350236,167.44846789494085,0.044237402808898756],[1.25,1.0,10.0,0.8,1699.1494090237643,529.4076260685223,163.82079510355598,0.0430488679216607],[1.25,3.0,6.5,0.3,1703.2372376205549,536.9918485208196,156.75133780435257,0.04120783042170195],[1.25,3.0,6.5,0.5,1712.7374407838745,537.5018682866297,152.2032822935109,0.0390229634543951],[1.25,3.0,6.5,0.8,1734.4973798279166,518.2854856900727,151.2751732362405,0.03837678449830803],[1.25,3.0,8.5,0.3,1694.6585485203013,538.7201381343503,163.28676859920952,0.04133381789845733],[1.25,3.0,8.5,0.5,1720.6813666073642,525.3231922433888,154.588608125458,0.03976273320951028],[1.25,3.0,8.5,0.8,1727.389867944145,524.5349713226369,152.288949119492,0.03831448464549272],[1.25,3.0,10.0,0.3,1717.2618964052087,524.5759473199812,157.64954055218524,0.0402050462890484],[1.25,3.0,10.0,0.5,1737.9074920497324,504.36501775478945,157.24182794235892,0.04019426490124856],[1.25,3.0,10.0,0.8,1719.9033907404728,525.7152180078583,155.82840737053962,0.039421193552449565],[1.25,4.0,6.5,0.3,1727.0966561219257,517.5840283019103,154.09315000152725,0.040490466229857705],[1.25,4.0,6.5,0.5,1747.500659611182,505.6732906397236,150.50768095885275,0.03852734751609956],[1.25,4.0,6.5,0.8,1755.1681082187636,512.9580935231476,144.13160456831713,0.03509687747591262],[1.25,4.0,8.5,0.3,1698.224922140688,541.3884474257719,157.77977185880454,0.041042743429887944],[1.25,4.0,8.5,0.5,1739.2870586268918,514.2670218362356,150.09577797428122,0.03854005662503897],[1.25,4.0,8.5,0.8,1744.6851541422875,514.4213020579134,148.57068306235135,0.03692914429498046],[1.25,4.0,10.0,0.3,1721.2194672155929,522.5406874365575,156.49899815738019,0.039896338876183976],[1.25,4.0,10.0,0.5,1748.4907320238012,509.3718328571261,147.90737666857353,0.03769202338019856],[1.25,4.0,10.0,0.8,1734.5909742146864,518.6466296550129,153.26202250330618,0.03740014945079754],[2.0,1.0,6.5,0.3,1706.9952207252072,502.7729377742677,177.62546473382625,0.04504255070667757],[2.0,1.0,6.5,0.5,1712.1685177086792,510.89501418584734,167.68333538169261,0.04370125308951395],[2.0,1.0,6.5,0.8,1707.168660505267,521.5170314341538,165.08141312351583,0.04249315797482772],[2.0,1.0,8.5,0.3,1695.3104108806042,508.9251060122463,181.23607460472041,0.04581136340096723],[2.0,1.0,8.5,0.5,1708.4072892636393,512.2466377476658,168.19465325257505,0.04446056789445269],[2.0,1.0,8.5,0.8,1706.1688095144987,515.7497286634014,169.43895811060614,0.04345700148460295],[2.0,1.0,10.0,0.3,1671.231055216657,536.2717175003944,177.1383948021081,0.046143532992340044],[2.0,1.0,10.0,0.5,1715.810615183243,505.20783943943127,169.57589134569034,0.04376226161266073],[2.0,1.0,10.0,0.8,1700.9492657632825,520.6342813475557,168.5832282638344,0.04393328985013283],[2.0,3.0,6.5,0.3,1696.9100367771375,527.7521055750991,167.09855665756672,0.04329572039608075],[2.0,3.0,6.5,0.5,1721.049204378197,520.9800482940974,157.65031297282312,0.04012817374194777],[2.0,3.0,6.5,0.8,1720.9867524276146,523.9022456749709,155.9568519375057,0.039661659983957286],[2.0,3.0,8.5,0.3,1683.536174447046,540.1989342571078,167.5798964616054,0.04347399793368955],[2.0,3.0,8.5,0.5,1710.4171443603454,521.2926472710183,165.38546349118488,0.04116189795097583],[2.0,3.0,8.5,0.8,1725.1630322585793,528.2468012221682,150.3799964903274,0.038484068011565835],[2.0,3.0,10.0,0.3,1711.3250504788966,520.3095347285429,162.63953103941097,0.042290353501259696],[2.0,3.0,10.0,0.5,1726.2324961784097,521.7340525345224,153.30597405383395,0.03949099089329404],[2.0,3.0,10.0,0.8,1717.900896999236,524.6813593564053,158.12705996257253,0.039716273472717015],[2.0,4.0,6.5,0.3,1734.5269321753374,499.06422633324473,161.73571963507428,0.041869248742538646],[2.0,4.0,6.5,0.5,1711.9655887605095,527.2752831196984,159.41889252871093,0.04053609423643302],[2.0,4.0,6.5,0.8,1725.8190739771685,527.3303202363855,151.5407408201203,0.03812394598652623],[2.0,4.0,8.5,0.3,1700.041683847199,531.4185088747674,162.94386864923334,0.04223837545152044],[2.0,4.0,8.5,0.5,1717.2231263473932,529.5574984659316,154.0047624756942,0.03968584508439043],[2.0,4.0,8.5,0.8,1752.694916630191,506.04217555149825,147.1718210431974,0.0376364347100489],[2.0,4.0,10.0,0.3,1713.1917137352616,525.794198159589,158.22771719816592,0.04111454836278953],[2.0,4.0,10.0,0.5,1716.9857346016922,526.5870011941528,156.13815806632095,0.04011564245513549],[2.0,4.0,10.0,0.8,1719.727684401811,530.8205701256256,153.2027285601698,0.038499606764953405]],"effects":{"grand":158.63562632964707,"higher":0.05101818774083777,"main":{"h_uav":{"levels":[0.5,1.25,2.0],"means":[155.5353613812597,157.88761147204866,162.48390613563285],"share":0.10978422979267582,"S":0.03667453011665032},"v_uav":{"levels":[1.0,3.0,4.0],"means":[167.7687864107181,156.3785041968866,151.7595883813365],"share":0.5967673541394194,"S":-0.10237467170823805},"v_dw":{"levels":[6.5,8.5,10.0],"means":[157.62931348749814,159.61141816671963,158.66614733472343],"share":0.008639171636909658,"S":0.01577597070728977},"r_p":{"levels":[0.0003,0.0005,0.0008],"means":[163.99592866969508,157.17345871801493,154.7374916012312],"share":0.2024523302089867,"S":-0.058905855632244174}},"inter":{"v_dw x r_p":0.01596749615699853,"h_uav x v_dw":0.007064785084426337,"h_uav x r_p":0.003059712545277255,"h_uav x v_uav":0.0027225343842768924,"v_uav x v_dw":0.0020370273704347947,"v_uav x r_p":0.0004871709397568094}},"check":{"deposit_sum":9602.372667904847,"inner_per_m2":154.588608125458,"outer_per_m2":1720.6813666073642,"escaped":0.03976273320951028,"refuge_cells":1001,"micro_cells":147,"fruit_cells":70,"uv_sum":1989.3389824803603,"viable":{"24.0":{"outer":0.5761069387974159,"mid":0.6820122536272578,"inner":0.7259717872713876,"microhabitat":0.7857061592255132},"72.0":{"outer":0.201611714134167,"mid":0.32630771641355616,"inner":0.3863262020117338,"microhabitat":0.4851062662715259}}},"validation":{"t1":{"tolerance":0.2,"rows":[{"d":0.6,"measured":2.47,"simulated":2.207,"dev":-0.1064,"ok":true},{"d":1.0,"measured":4.03,"simulated":4.107,"dev":0.0191,"ok":true},{"d":1.6,"measured":5.65,"simulated":5.845,"dev":0.0346,"ok":true}]},"t2":{"field":[0.318,0.735],"ratio":0.08984,"band":[0.254,0.882],"ok":false},"t3":{"value":0.5761,"band":[0.4,0.6],"ok":true},"t4":{"ratio":4.25,"band":[1.5,150.0],"ok":true}},"commit":"5041120","built":"30 Sep 2026"}</script>
+
+<script id="crlegv-model">
+(function (root) {
+  "use strict";
+
+  function edges(stop, cells) {
+    var out = new Float64Array(cells + 1);
+    var step = stop / cells;
+    for (var i = 0; i < cells; i++) out[i] = i * step;
+    out[cells] = stop;
+    return out;
+  }
+
+  function arange(start, stop, step) {
+    var n = Math.ceil((stop - start) / step);
+    var delta = (start + step) - start;
+    var out = [];
+    for (var i = 0; i < n; i++) out.push(i === 0 ? start : i === 1 ? start + step : start + i * delta);
+    return out;
+  }
+
+  function buildCanopy(P, lai, k) {
+    var width = P.L_x, depth = P.L_z, dx = P.dx;
+    var nx = Math.round(width / dx), nz = Math.round(depth / dx);
+    var xEdges = edges(width, nx), zEdges = edges(depth, nz);
+    var xC = new Float64Array(nx), zC = new Float64Array(nz);
+    for (var i = 0; i < nx; i++) xC[i] = 0.5 * (xEdges[i] + xEdges[i + 1]);
+    for (var j = 0; j < nz; j++) zC[j] = 0.5 * (zEdges[j] + zEdges[j + 1]);
+    var lad = lai / depth;
+    var spacing = P.s_fruit, radius = P.r_fruit;
+    var xs = arange(P.FRUIT_FIRST_X_M, width, spacing);
+    var fruits = [];
+    P.FRUIT_ROW_DEPTHS_M.forEach(function (z, row) {
+      var offset = row % 2 === 0 ? 0.0 : spacing / 2.0;
+      xs.forEach(function (x) {
+        if (x + offset < width) fruits.push({ x: x + offset, z: z, r: radius });
+      });
+    });
+    var tauFruit = new Float64Array(nx * nz), fruitMask = new Uint8Array(nx * nz);
+    fruits.forEach(function (f) {
+      for (var i = 0; i < nx; i++) {
+        if (Math.abs(xC[i] - f.x) > f.r) continue;
+        for (var j = 0; j < nz; j++) {
+          if (zC[j] > f.z) tauFruit[i * nz + j] += P.tau_fruit;
+          if (Math.abs(zC[j] - f.z) <= f.r) fruitMask[i * nz + j] = 1;
+        }
+      }
+    });
+    var intensity = new Float64Array(nx * nz), refuge = new Uint8Array(nx * nz);
+    for (var a = 0; a < nx; a++) {
+      for (var b = 0; b < nz; b++) {
+        var idx = a * nz + b;
+        intensity[idx] = Math.exp(-(k * (zC[b] * lad) + tauFruit[idx]));
+        refuge[idx] = intensity[idx] <= P.tau ? 1 : 0;
+      }
+    }
+    return { nx: nx, nz: nz, dx: dx, width: width, depth: depth, xEdges: xEdges, zEdges: zEdges,
+             xC: xC, zC: zC, lad: lad, fruits: fruits, fruitMask: fruitMask, intensity: intensity, refuge: refuge };
+  }
+
+  function dilate(mask, nx, nz, cells) {
+    var out = Uint8Array.from(mask);
+    for (var c = 0; c < cells; c++) {
+      var next = Uint8Array.from(out);
+      for (var i = 0; i < nx; i++) {
+        for (var j = 0; j < nz; j++) {
+          var idx = i * nz + j;
+          if (i > 0 && out[idx - nz]) next[idx] = 1;
+          if (i < nx - 1 && out[idx + nz]) next[idx] = 1;
+          if (j > 0 && out[idx - 1]) next[idx] = 1;
+          if (j < nz - 1 && out[idx + 1]) next[idx] = 1;
+        }
+      }
+      out = next;
+    }
+    return out;
+  }
+
+  function zones(canopy) {
+    var nx = canopy.nx, nz = canopy.nz, third = Math.floor(nz / 3);
+    var outer = new Uint8Array(nx * nz), mid = new Uint8Array(nx * nz), inner = new Uint8Array(nx * nz);
+    for (var i = 0; i < nx; i++) {
+      for (var j = 0; j < nz; j++) {
+        var idx = i * nz + j;
+        if (j < third) outer[idx] = 1; else if (j < 2 * third) mid[idx] = 1; else inner[idx] = 1;
+      }
+    }
+    var near = dilate(canopy.fruitMask, nx, nz, 2);
+    var micro = new Uint8Array(nx * nz);
+    for (var m = 0; m < nx * nz; m++) micro[m] = canopy.refuge[m] && near[m] ? 1 : 0;
+    return { outer: outer, mid: mid, inner: inner, microhabitat: micro, third: third };
+  }
+
+  function dragCoefficient(re) {
+    if (re < 1e-9) return 0.0;
+    if (re <= 1.0) return 24.0 / re;
+    if (re <= 400.0) return 24.0 / Math.pow(re, 0.646);
+    if (re <= 3e5) return 0.5;
+    return 0.18;
+  }
+
+  function runSpray(P, canopy, s) {
+    var nx = canopy.nx, nz = canopy.nz, dx = canopy.dx;
+    var width = canopy.xEdges[nx], depth = canopy.zEdges[nz];
+    var dt = P.dt, n = s.n, rp = s.rp, vDw = s.vDw;
+    var rhoA = P.rho_a, mu = P.mu_a, g = P.g, lDw = P.L_dw;
+    var efficiency = P.eta, fruitCapture = P.k_fruit, floor = 1e-6;
+    var d = 2.0 * rp, area = Math.PI * Math.pow(rp, 2), mass = P.rho_p * (4.0 / 3.0) * Math.PI * Math.pow(rp, 3);
+    var maxSteps = Math.trunc(60.0 / dt), half = 0.5 * dx, step = width / n;
+    var deposition = new Float64Array(nx * nz), escaped = 0.0;
+    for (var q = 0; q < n; q++) {
+      var px = q * step, pz = -s.altitude, vx = s.vUav, vz = vDw, remaining = 1.0;
+      var deposits = new Map();
+      for (var t = 0; t < maxSteps; t++) {
+        var airZ = pz <= 0.0 ? vDw : vDw * Math.exp(-pz / lDw);
+        var relX = 0.0 - vx, relZ = airZ - vz;
+        var speed = Math.sqrt(relX * relX + relZ * relZ);
+        var re = rhoA * speed * d / mu;
+        var coef = 0.5 * rhoA * dragCoefficient(re) * area * speed;
+        vx = vx + (coef * relX / mass + 0.0) * dt;
+        vz = vz + (coef * relZ / mass + g) * dt;
+        var nxp = px + vx * dt, nzp = pz + vz * dt;
+        var sx = nxp - px, sz = nzp - pz;
+        var ds = Math.sqrt(sx * sx + sz * sz);
+        if (nzp > 0.0 && remaining > floor && ds > 0.0) {
+          var sub = Math.max(1, Math.ceil(ds / half));
+          var seg = ds / sub;
+          for (var si = 0; si < sub; si++) {
+            var frac = (si + 0.5) / sub;
+            var ptx = px + sx * frac, ptz = pz + sz * frac;
+            if (ptz <= 0.0) continue;
+            if (ptz >= depth) break;
+            var xm = ptx % width;
+            var i = Math.trunc(xm / dx), j = Math.trunc(ptz / dx);
+            var key = i * nz + j;
+            var optical = canopy.lad * efficiency;
+            if (canopy.fruitMask[key]) optical += fruitCapture;
+            var captured = remaining * (1.0 - Math.exp(-optical * seg));
+            deposits.set(key, (deposits.has(key) ? deposits.get(key) : 0.0) + captured);
+            remaining -= captured;
+            if (remaining <= floor) break;
+          }
+        }
+        px = nxp;
+        pz = nzp;
+        if (remaining <= floor) break;
+        if (pz >= depth) break;
+      }
+      deposits.forEach(function (amount, key) { deposition[key] += amount; });
+      escaped += remaining;
+    }
+    return { deposition: deposition, escaped: escaped / n };
+  }
+
+  function decayConstants(intensity, halfExposed, halfShaded) {
+    var lamE = Math.log(2.0) / halfExposed, lamS = Math.log(2.0) / halfShaded;
+    var out = new Float64Array(intensity.length);
+    for (var i = 0; i < intensity.length; i++) out[i] = lamS + (lamE - lamS) * intensity[i];
+    return out;
+  }
+
+  function zoneDeposit(canopy, deposition, mask) {
+    var sum = 0.0, count = 0;
+    for (var i = 0; i < mask.length; i++) if (mask[i]) { sum += deposition[i]; count++; }
+    return count ? sum / (count * canopy.dx * canopy.dx) : 0.0;
+  }
+
+  function zoneViable(decay, deposition, mask, hours) {
+    var sum = 0.0, count = 0;
+    for (var i = 0; i < mask.length; i++) {
+      if (mask[i] && deposition[i] > 0.0) { sum += Math.exp(-decay[i] * hours); count++; }
+    }
+    return count ? sum / count : NaN;
+  }
+
+  root.CrleGV = { buildCanopy: buildCanopy, zones: zones, dragCoefficient: dragCoefficient, runSpray: runSpray,
+                  decayConstants: decayConstants, zoneDeposit: zoneDeposit, zoneViable: zoneViable };
+})(typeof window !== "undefined" ? window : globalThis);
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var DATA = JSON.parse(document.getElementById("crlegv-data").textContent);
+  var M = window.CrleGV;
+  var $ = function (sel) { return document.querySelector(sel); };
+  if (!DATA) {
+    $("#meta").innerHTML = '<span class="chip bad"><span class="icon">✕</span>Model data missing — rebuild the page with src/explorer.py</span>';
+    return;
+  }
+  var P = DATA.params;
+  var NF = function (digits) { return new Intl.NumberFormat("en-GB", { minimumFractionDigits: digits, maximumFractionDigits: digits }); };
+  var fmt0 = NF(0), fmt1 = NF(1), fmt2 = NF(2), fmt3 = NF(3);
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var ZONES = [
+    { key: "outer", name: "Outer", token: "--zone-outer" },
+    { key: "mid", name: "Mid", token: "--zone-mid" },
+    { key: "inner", name: "Inner", token: "--zone-inner" },
+    { key: "microhabitat", name: "Microhabitat", token: "--zone-micro" }
+  ];
+  var BLUE = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987e5", "#2a78d6", "#256abf", "#1c5cab", "#184f95", "#104281", "#0d366b"];
+  var AQUA = ["#cce8d9", "#b4dbc6", "#9ad0b4", "#80c3a2", "#62b890", "#43ac7f", "#009f6d", "#008f62", "#007f56", "#006f4b", "#006040", "#005136", "#00432b"];
+  var DEPOSIT_DOMAIN = [10, 30000];
+  var VIABLE_DOMAIN = [0.001, 1];
+
+  var L = DATA.levels;
+  var CONTROLS = [
+    { id: "h", group: "drone", label: "Height above canopy", unit: "m", min: L.h_uav[0], max: L.h_uav[2], step: 0.05, digits: 2, marks: L.h_uav, study: true },
+    { id: "v", group: "drone", label: "Flight speed", unit: "m/s", min: L.v_uav[0], max: L.v_uav[2], step: 0.1, digits: 1, marks: L.v_uav, study: true },
+    { id: "dw", group: "drone", label: "Downwash", unit: "m/s", min: L.v_dw[0], max: L.v_dw[2], step: 0.1, digits: 1, marks: L.v_dw, study: true },
+    { id: "rp", group: "droplets", label: "Droplet radius", unit: "mm", min: L.r_p_mm[0], max: L.r_p_mm[2], step: 0.01, digits: 2, marks: L.r_p_mm, study: true },
+    { id: "lai", group: "canopy", label: "Leaf area index", unit: "", min: DATA.ranges.LAI[0], max: DATA.ranges.LAI[2], step: 0.1, digits: 1, marks: DATA.ranges.LAI, study: false },
+    { id: "k", group: "canopy", label: "UV extinction coefficient", unit: "", min: DATA.ranges.k[0], max: DATA.ranges.k[2], step: 0.005, digits: 3, marks: DATA.ranges.k, study: false },
+    { id: "t", group: "virus", label: "Time after spraying", unit: "h", min: 0, max: 504, step: 6, digits: 0, marks: [24, 72, 504], study: false },
+    { id: "hlE", group: "virus", label: "Half-life in full sun", unit: "h", min: 6, max: 96, step: 1, digits: 0, marks: [P.T_half_exposed], study: false },
+    { id: "hlS", group: "virus", label: "Half-life in full shade", unit: "h", min: 24, max: 336, step: 6, digits: 0, marks: [P.T_half_shaded], study: false }
+  ];
+  var CENTRAL = { h: P.h_uav, v: P.v_uav, dw: P.v_dw, rp: P.r_p * 1000, lai: P.LAI, k: P.k, t: 72, hlE: P.T_half_exposed, hlS: P.T_half_shaded };
+  var state = Object.assign({}, CENTRAL);
+  var model = {};
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function isDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function svg(tag, attrs, parent) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function text(parent, x, y, str, cls, anchor, baseline) {
+    var t = svg("text", { x: x, y: y, "class": cls, "text-anchor": anchor || "start", "dominant-baseline": baseline || "middle" }, parent);
+    t.textContent = str;
+    return t;
+  }
+  function hexToRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+  function rampColor(stops, f) {
+    var x = Math.max(0, Math.min(1, f)) * (stops.length - 1);
+    var i = Math.min(stops.length - 2, Math.floor(x)), u = x - i;
+    var a = hexToRgb(stops[i]), b = hexToRgb(stops[i + 1]);
+    return [Math.round(a[0] + (b[0] - a[0]) * u), Math.round(a[1] + (b[1] - a[1]) * u), Math.round(a[2] + (b[2] - a[2]) * u)];
+  }
+  function themedStops(stops) { return isDark() ? stops.slice().reverse() : stops; }
+  function pct(v) {
+    if (!isFinite(v)) return "–";
+    var p = v * 100;
+    if (p >= 1) return fmt1.format(p) + "%";
+    if (p >= 0.1) return fmt2.format(p) + "%";
+    return new Intl.NumberFormat("en-GB", { maximumSignificantDigits: 2 }).format(p) + "%";
+  }
+  function shortPct(v) { return +(v * 100).toPrecision(2) + "%"; }
+  function hoursLabel(h) {
+    if (h <= 72) return fmt0.format(h) + " h";
+    var d = h / 24;
+    return (Number.isInteger(d) ? fmt0.format(d) : fmt1.format(d)) + " days";
+  }
+  function sameNumber(a, b) { return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b)); }
+
+  var tip = $("#tip");
+  function showTip(html, x, y) {
+    tip.innerHTML = html;
+    tip.hidden = false;
+    var r = tip.getBoundingClientRect();
+    var left = x + 14, top = y + 14;
+    if (left + r.width > window.innerWidth - 8) left = x - r.width - 14;
+    if (top + r.height > window.innerHeight - 8) top = y - r.height - 14;
+    tip.style.left = Math.max(8, left) + "px";
+    tip.style.top = Math.max(8, top) + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+
+  function buildControls() {
+    CONTROLS.forEach(function (c) {
+      var wrap = document.createElement("div");
+      wrap.className = "control";
+      var ticks = c.marks.map(function (m) {
+        var left = (m - c.min) / (c.max - c.min) * 100;
+        return '<span data-mark="' + m + '" style="left:' + left + '%">' + labelFor(c, m) + "</span>";
+      }).join("");
+      wrap.innerHTML =
+        '<div class="control-head"><label for="in-' + c.id + '">' + c.label + '</label><output id="out-' + c.id + '" for="in-' + c.id + '"></output></div>' +
+        '<input type="range" id="in-' + c.id + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '" value="' + state[c.id] + '">' +
+        '<div class="ticks" aria-hidden="true">' + ticks + "</div>" +
+        '<div class="tag" id="tag-' + c.id + '"></div>';
+      $("#group-" + c.group).appendChild(wrap);
+      var input = wrap.querySelector("input");
+      input.addEventListener("input", function () { setValue(c, parseFloat(input.value)); schedule(c.group); });
+    });
+  }
+  function labelFor(c, v) {
+    if (c.id === "t") return v === 504 ? "21 d" : v + " h";
+    return String(+v.toFixed(c.digits));
+  }
+  function snap(c, v) {
+    for (var i = 0; i < c.marks.length; i++) if (Math.abs(v - c.marks[i]) < c.step / 2) return c.marks[i];
+    return +v.toFixed(c.digits);
+  }
+  function setValue(c, v) {
+    state[c.id] = snap(c, v);
+    syncControl(c);
+  }
+  function syncControl(c) {
+    var v = state[c.id];
+    $("#in-" + c.id).value = v;
+    var shown = c.id === "t" ? hoursLabel(v) : (+v.toFixed(c.digits)) + (c.unit ? " " + c.unit : "");
+    $("#out-" + c.id).textContent = shown;
+    var tag = "";
+    var idx = c.marks.findIndex(function (m) { return sameNumber(m, v); });
+    if (c.study && idx >= 0) tag = ["Low", "Central", "High"][idx] + " level in the study";
+    else if (c.study) tag = "Between study levels";
+    else if (c.group === "canopy" && idx >= 0) tag = ["Lowest", "Central", "Highest"][idx] + " sourced value";
+    else if (c.group === "canopy") tag = "Within the sourced range";
+    else if ((c.id === "hlE" || c.id === "hlS") && idx >= 0) tag = "Sourced value";
+    else if (c.id === "hlE" || c.id === "hlS") tag = "What-if value";
+    $("#tag-" + c.id).textContent = tag;
+    Array.prototype.forEach.call(document.querySelectorAll("#in-" + c.id + " ~ .ticks span"), function (s) {
+      s.classList.toggle("on", sameNumber(+s.getAttribute("data-mark"), v));
+    });
+  }
+  function syncAll() { CONTROLS.forEach(syncControl); }
+
+  function radiusMetres(mm) {
+    for (var i = 0; i < L.r_p_mm.length; i++) if (sameNumber(mm, L.r_p_mm[i])) return L.r_p[i];
+    return mm / 1000;
+  }
+  function sprayInputs(s) {
+    return { altitude: s.h, vUav: s.v, vDw: s.dw, rp: radiusMetres(s.rp), n: P.N };
+  }
+  function computeCanopy() {
+    model.canopy = M.buildCanopy(P, state.lai, state.k);
+    model.zones = M.zones(model.canopy);
+  }
+  function computeSpray() {
+    model.spray = M.runSpray(P, model.canopy, sprayInputs(state));
+    model.profile = profile(model.canopy, model.spray.deposition);
+  }
+  function computeVirus() {
+    model.decay = M.decayConstants(model.canopy.intensity, state.hlE, state.hlS);
+  }
+  function profile(canopy, dep) {
+    var out = new Float64Array(canopy.nz);
+    for (var j = 0; j < canopy.nz; j++) {
+      var s = 0.0;
+      for (var i = 0; i < canopy.nx; i++) s += dep[i * canopy.nz + j];
+      out[j] = s / canopy.nx / (canopy.dx * canopy.dx);
+    }
+    return out;
+  }
+  function zoneStats(canopy, zonesMask, spray) {
+    return {
+      outer: M.zoneDeposit(canopy, spray.deposition, zonesMask.outer),
+      mid: M.zoneDeposit(canopy, spray.deposition, zonesMask.mid),
+      inner: M.zoneDeposit(canopy, spray.deposition, zonesMask.inner),
+      escaped: spray.escaped
+    };
+  }
+
+  function baseline() {
+    var canopy = M.buildCanopy(P, CENTRAL.lai, CENTRAL.k);
+    var zonesMask = M.zones(canopy);
+    var spray = M.runSpray(P, canopy, sprayInputs(CENTRAL));
+    var decay = M.decayConstants(canopy.intensity, CENTRAL.hlE, CENTRAL.hlS);
+    model.central = { canopy: canopy, zones: zonesMask, spray: spray, stats: zoneStats(canopy, zonesMask, spray), profile: profile(canopy, spray.deposition) };
+    var C = DATA.check, problems = [];
+    var sum = spray.deposition.reduce(function (a, b) { return a + b; }, 0);
+    function close(a, b, rel) { return Math.abs(a - b) <= rel * Math.max(1e-12, Math.abs(b)); }
+    if (!close(sum, C.deposit_sum, 1e-9)) problems.push("total deposit");
+    if (!close(model.central.stats.inner, C.inner_per_m2, 1e-9)) problems.push("inner deposit");
+    if (!close(model.central.stats.outer, C.outer_per_m2, 1e-9)) problems.push("outer deposit");
+    if (!close(spray.escaped, C.escaped, 1e-9)) problems.push("escaped spray");
+    var uvSum = canopy.intensity.reduce(function (a, b) { return a + b; }, 0);
+    if (!close(uvSum, C.uv_sum, 1e-9)) problems.push("UV field");
+    var refugeCount = canopy.refuge.reduce(function (a, b) { return a + b; }, 0);
+    var microCount = zonesMask.microhabitat.reduce(function (a, b) { return a + b; }, 0);
+    var fruitCount = canopy.fruitMask.reduce(function (a, b) { return a + b; }, 0);
+    if (refugeCount !== C.refuge_cells || microCount !== C.micro_cells || fruitCount !== C.fruit_cells) problems.push("canopy structure");
+    ["24.0", "72.0"].forEach(function (h) {
+      ZONES.forEach(function (z) {
+        var v = M.zoneViable(decay, spray.deposition, zonesMask[z.key], +h);
+        if (!close(v, C.viable[h][z.key], 1e-9)) problems.push("viability at " + (+h) + " h");
+      });
+    });
+    model.checkProblems = problems.filter(function (p, i, a) { return a.indexOf(p) === i; });
+  }
+
+  function renderMeta() {
+    var ok = !model.checkProblems.length;
+    var check = ok
+      ? '<span class="chip good"><span class="icon" aria-hidden="true">✓</span>Live model matches the saved Python run</span>'
+      : '<span class="chip bad"><span class="icon" aria-hidden="true">✕</span>Live model differs from the saved run: ' + model.checkProblems.join(", ") + "</span>";
+    $("#meta").innerHTML = check +
+      '<span class="chip">Model version ' + DATA.commit + "</span>" +
+      '<span class="chip">Study results from ' + DATA.built + "</span>";
+  }
+
+  function tile(label, value, sub, swatch) {
+    return '<div class="tile"><div class="label">' + (swatch ? '<span class="swatch" style="background:var(' + swatch + ')"></span>' : "") + label + '</div><div class="value">' + value + '</div><div class="sub">' + sub + "</div></div>";
+  }
+  function studyRun() {
+    if (!sameNumber(state.lai, CENTRAL.lai) || !sameNumber(state.k, CENTRAL.k)) return null;
+    var rpm = radiusMetres(state.rp);
+    for (var i = 0; i < DATA.runs.length; i++) {
+      var r = DATA.runs[i];
+      if (sameNumber(r[0], state.h) && sameNumber(r[1], state.v) && sameNumber(r[2], state.dw) && sameNumber(r[3] / 1000, rpm)) return i;
+    }
+    return null;
+  }
+  function renderSprayTiles() {
+    var s = zoneStats(model.canopy, model.zones, model.spray), c = model.central.stats;
+    var change = (s.inner - c.inner) / c.inner;
+    var arrow = Math.abs(change) < 0.0005 ? "" : (change > 0 ? "▲ " : "▼ ");
+    var deltaText = Math.abs(change) < 0.0005 ? "Same as the central settings" : arrow + (change > 0 ? "+" : "−") + fmt1.format(Math.abs(change) * 100) + "% vs central settings";
+    var idx = studyRun(), rank = "";
+    if (idx !== null) {
+      var order = DATA.runs.map(function (r, i) { return [r[6], i]; }).sort(function (a, b) { return b[0] - a[0]; });
+      var pos = order.findIndex(function (o) { return o[1] === idx; }) + 1;
+      rank = " · rank " + pos + " of 81";
+    }
+    var ratio = s.inner / s.outer, band = DATA.validation.t2;
+    var ratioSub = ratio < band.field[0]
+      ? '<span class="status fail"><span aria-hidden="true">▼</span>Below field range ' + fmt2.format(band.field[0]) + "–" + fmt2.format(band.field[1]) + "</span>"
+      : "Field range " + fmt2.format(band.field[0]) + "–" + fmt2.format(band.field[1]);
+    $("#spray-tiles").innerHTML =
+      tile("Inner canopy", fmt1.format(s.inner) + " <small>per m²</small>", deltaText + rank) +
+      tile("Outer canopy", fmt0.format(s.outer) + " <small>per m²</small>", "Mid canopy " + fmt0.format(s.mid) + " per m²") +
+      tile("Inner ÷ outer", fmt3.format(ratio), ratioSub) +
+      tile("Passes through the canopy", pct(s.escaped), "Share of the spray leaving the canopy floor");
+  }
+
+  function mapLayout(box) {
+    var W = Math.max(280, box.clientWidth);
+    var m = { l: 40, r: 58, t: 6, b: 34 };
+    var pw = W - m.l - m.r;
+    var ph = pw * model.canopy.depth / model.canopy.width;
+    return { W: W, H: ph + m.t + m.b, m: m, pw: pw, ph: ph };
+  }
+  function drawMap(boxSel, values, colorOf, opts) {
+    var box = $(boxSel);
+    var lay = mapLayout(box);
+    var canvas = box.querySelector("canvas");
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvas.setAttribute("role", "img");
+      box.appendChild(canvas);
+      canvas.addEventListener("pointermove", function (e) { if (canvas._hover) canvas._hover(e); });
+      canvas.addEventListener("pointerleave", hideTip);
+    }
+    canvas.setAttribute("aria-label", opts.label);
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(lay.W * dpr);
+    canvas.height = Math.round(lay.H * dpr);
+    canvas.style.height = lay.H + "px";
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, lay.W, lay.H);
+    var cv = model.canopy, nx = cv.nx, nz = cv.nz;
+    var off = document.createElement("canvas");
+    off.width = nx;
+    off.height = nz;
+    var octx = off.getContext("2d");
+    var img = octx.createImageData(nx, nz);
+    for (var i = 0; i < nx; i++) {
+      for (var j = 0; j < nz; j++) {
+        var rgb = colorOf(values[i * nz + j], i * nz + j);
+        var p = (j * nx + i) * 4;
+        img.data[p] = rgb[0]; img.data[p + 1] = rgb[1]; img.data[p + 2] = rgb[2]; img.data[p + 3] = 255;
+      }
+    }
+    octx.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(off, lay.m.l, lay.m.t, lay.pw, lay.ph);
+    var sx = lay.pw / cv.width, sz = lay.ph / cv.depth;
+    var X = function (x) { return lay.m.l + x * sx; }, Z = function (z) { return lay.m.t + z * sz; };
+    if (opts.outline) {
+      ctx.strokeStyle = css("--ink");
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (var a = 0; a < nx; a++) {
+        for (var b = 0; b < nz; b++) {
+          var k = a * nz + b;
+          if (!opts.outline[k]) continue;
+          var x0 = X(cv.xEdges[a]), x1 = X(cv.xEdges[a + 1]), z0 = Z(cv.zEdges[b]), z1 = Z(cv.zEdges[b + 1]);
+          if (a === 0 || !opts.outline[k - nz]) { ctx.moveTo(x0, z0); ctx.lineTo(x0, z1); }
+          if (a === nx - 1 || !opts.outline[k + nz]) { ctx.moveTo(x1, z0); ctx.lineTo(x1, z1); }
+          if (b === 0 || !opts.outline[k - 1]) { ctx.moveTo(x0, z0); ctx.lineTo(x1, z0); }
+          if (b === nz - 1 || !opts.outline[k + 1]) { ctx.moveTo(x0, z1); ctx.lineTo(x1, z1); }
+        }
+      }
+      ctx.stroke();
+    }
+    var third = model.zones.third;
+    [cv.zEdges[third], cv.zEdges[2 * third]].forEach(function (z) {
+      var y = Math.round(Z(z)) + 0.5;
+      [["--surface", 3], ["--ink", 1]].forEach(function (pen) {
+        ctx.strokeStyle = css(pen[0]);
+        ctx.lineWidth = pen[1];
+        ctx.beginPath(); ctx.moveTo(X(0), y); ctx.lineTo(X(cv.width), y); ctx.stroke();
+      });
+    });
+    if (opts.fruits) {
+      ctx.strokeStyle = css("--ink");
+      cv.fruits.forEach(function (f) {
+        ctx.beginPath(); ctx.arc(X(f.x), Z(f.z), Math.max(2.5, f.r * sx), 0, Math.PI * 2); ctx.stroke();
+      });
+    }
+    ctx.fillStyle = css("--ink-2");
+    ctx.font = "11px " + css("--font-body");
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "right";
+    for (var d = 0; d <= cv.depth + 1e-9; d += 1) ctx.fillText(d + " m", lay.m.l - 6, Z(d));
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    for (var x = 0; x <= cv.width + 1e-9; x += 1) ctx.fillText(x + " m", X(x), lay.m.t + lay.ph + 6);
+    ctx.fillText("Position across the row", lay.m.l + lay.pw / 2, lay.m.t + lay.ph + 20);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    var bounds = [0, cv.zEdges[third], cv.zEdges[2 * third], cv.depth];
+    ["Outer", "Mid", "Inner"].forEach(function (name, n) {
+      ctx.fillText(name, lay.m.l + lay.pw + 8, Z((bounds[n] + bounds[n + 1]) / 2));
+    });
+    canvas._hover = function (e) {
+      var r = canvas.getBoundingClientRect();
+      var px = e.clientX - r.left, pz = e.clientY - r.top;
+      var x = (px - lay.m.l) / sx, z = (pz - lay.m.t) / sz;
+      if (x < 0 || z < 0 || x >= cv.width || z >= cv.depth) { hideTip(); return; }
+      var i = Math.min(nx - 1, Math.floor(x / cv.dx)), j = Math.min(nz - 1, Math.floor(z / cv.dx));
+      showTip(opts.tip(i, j, i * nz + j), e.clientX, e.clientY);
+    };
+  }
+  function zoneName(j) {
+    var t = model.zones.third;
+    return j < t ? "Outer" : j < 2 * t ? "Mid" : "Inner";
+  }
+  function logFrac(v, domain) {
+    var a = Math.log10(domain[0]), b = Math.log10(domain[1]);
+    return (Math.log10(Math.max(v, domain[0])) - a) / (b - a);
+  }
+  function renderDepositMap() {
+    var dep = model.spray.deposition, area = model.canopy.dx * model.canopy.dx;
+    var stops = themedStops(BLUE);
+    drawMap("#map-deposit", dep, function (v) {
+      return rampColor(stops, logFrac(Math.max(v / area, 1e-9), DEPOSIT_DOMAIN));
+    }, {
+      label: "Map of spray deposit across the 4 m by 3 m canopy slice",
+      fruits: true,
+      tip: function (i, j, k) {
+        var cv = model.canopy;
+        return "<b>" + fmt0.format(dep[k] / area) + " per m²</b><br>" + fmt2.format(cv.xC[i]) + " m across · " + fmt2.format(cv.zC[j]) + " m deep<br>" + zoneName(j) + " zone" + (cv.fruitMask[k] ? " · fruit" : "");
+      }
+    });
+    rampBar("#ramp-deposit", stops, [10, 100, 1000, 10000], function (v) { return logFrac(v, DEPOSIT_DOMAIN); }, function (v) { return fmt0.format(v); }, "Deposit per m², droplet equivalents");
+  }
+  function rampBar(sel, stops, ticks, pos, label, caption) {
+    var box = $(sel);
+    var grad = stops.map(function (h, i) { return h + " " + (i / (stops.length - 1) * 100).toFixed(1) + "%"; }).join(", ");
+    box.innerHTML = '<div class="bar" style="background:linear-gradient(90deg,' + grad + ')"></div><div class="scale">' +
+      ticks.map(function (t) { return '<span style="left:' + (pos(t) * 100) + '%">' + label(t) + "</span>"; }).join("") +
+      '</div><div class="caption">' + caption + "</div>";
+  }
+
+  function chartBox(sel, height) {
+    var box = $(sel);
+    box.innerHTML = "";
+    var W = Math.max(280, box.clientWidth);
+    var root = svg("svg", { viewBox: "0 0 " + W + " " + height, width: W, height: height, role: "img" }, box);
+    return { root: root, W: W, H: height };
+  }
+  function renderProfile() {
+    var cv = model.canopy, same = sameState();
+    var series = [];
+    if (!same) series.push({ name: "Central settings", values: model.central.profile, token: "--context", width: 1.5 });
+    series.push({ name: same ? "Central settings" : "Current settings", values: model.profile, token: "--accent", width: 2 });
+    $("#legend-profile").innerHTML = series.length > 1 ? series.map(function (s) {
+      return '<span><span class="key" style="background:var(' + s.token + ')"></span>' + s.name + "</span>";
+    }).join("") : "";
+    var c = chartBox("#chart-profile", 320);
+    c.root.setAttribute("aria-label", "Deposit per square metre by depth below the canopy top");
+    var m = { l: 44, r: 58, t: 10, b: 44 };
+    var all = [];
+    series.forEach(function (s) { for (var j = 0; j < s.values.length; j++) if (s.values[j] > 0) all.push(s.values[j]); });
+    var lo = Math.pow(10, Math.floor(Math.log10(Math.min.apply(null, all))));
+    var hi = Math.pow(10, Math.ceil(Math.log10(Math.max.apply(null, all))));
+    var X = function (v) { return m.l + (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo)) * (c.W - m.l - m.r); };
+    var Y = function (z) { return m.t + z / cv.depth * (c.H - m.t - m.b); };
+    for (var d = lo; d <= hi * 1.0001; d *= 10) {
+      svg("line", { x1: X(d), x2: X(d), y1: m.t, y2: c.H - m.b, "class": "grid" }, c.root);
+      text(c.root, X(d), c.H - m.b + 12, fmt0.format(d), "tick", "middle");
+    }
+    text(c.root, m.l + (c.W - m.l - m.r) / 2, c.H - 10, "Deposit per m² (log scale)", "axis-title", "middle");
+    for (var z = 0; z <= cv.depth + 1e-9; z += 0.5) text(c.root, m.l - 6, Y(z), (+z.toFixed(1)) + " m", "tick", "end");
+    var third = model.zones.third, bounds = [0, cv.zEdges[third], cv.zEdges[2 * third], cv.depth];
+    [bounds[1], bounds[2]].forEach(function (z) { svg("line", { x1: m.l, x2: c.W - m.r, y1: Y(z), y2: Y(z), "class": "zone-rule" }, c.root); });
+    ["Outer", "Mid", "Inner"].forEach(function (n, i) { text(c.root, c.W - m.r + 8, Y((bounds[i] + bounds[i + 1]) / 2), n, "direct"); });
+    svg("line", { x1: m.l, x2: m.l, y1: m.t, y2: c.H - m.b, "class": "axis" }, c.root);
+    series.forEach(function (s) {
+      var d = "";
+      for (var j = 0; j < cv.nz; j++) d += (j ? "L" : "M") + X(Math.max(s.values[j], lo)).toFixed(2) + " " + Y(cv.zC[j]).toFixed(2);
+      svg("path", { d: d, fill: "none", stroke: "var(" + s.token + ")", "stroke-width": s.width, "stroke-linejoin": "round", "stroke-linecap": "round" }, c.root);
+    });
+    var cross = svg("line", { x1: m.l, x2: c.W - m.r, y1: 0, y2: 0, "class": "crosshair", visibility: "hidden" }, c.root);
+    var hit = svg("rect", { x: m.l, y: m.t, width: c.W - m.l - m.r, height: c.H - m.t - m.b, fill: "transparent" }, c.root);
+    hit.addEventListener("pointermove", function (e) {
+      var r = c.root.getBoundingClientRect();
+      var z = (e.clientY - r.top - m.t) / (c.H - m.t - m.b) * cv.depth;
+      var j = Math.max(0, Math.min(cv.nz - 1, Math.floor(z / cv.dx)));
+      cross.setAttribute("y1", Y(cv.zC[j]));
+      cross.setAttribute("y2", Y(cv.zC[j]));
+      cross.setAttribute("visibility", "visible");
+      var html = "<b>" + fmt2.format(cv.zC[j]) + " m deep</b> · " + zoneName(j) + " zone";
+      series.slice().reverse().forEach(function (s) {
+        html += '<div class="row"><span class="swatch" style="background:var(' + s.token + ')"></span>' + s.name + ": " + fmt0.format(s.values[j]) + " per m²</div>";
+      });
+      showTip(html, e.clientX, e.clientY);
+    });
+    hit.addEventListener("pointerleave", function () { cross.setAttribute("visibility", "hidden"); hideTip(); });
+    var s0 = zoneStats(model.canopy, model.zones, model.spray), s1 = model.central.stats;
+    $("#table-profile").innerHTML = "<table><thead><tr><th>Zone</th><th class=\"num\">Current (per m²)</th><th class=\"num\">Central (per m²)</th></tr></thead><tbody>" +
+      ["outer", "mid", "inner"].map(function (k) {
+        return "<tr><td>" + k.charAt(0).toUpperCase() + k.slice(1) + '</td><td class="num">' + fmt1.format(s0[k]) + '</td><td class="num">' + fmt1.format(s1[k]) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+  function sameState() {
+    return ["h", "v", "dw", "rp", "lai", "k"].every(function (k) { return sameNumber(state[k], CENTRAL[k]); });
+  }
+
+  function renderVirus() {
+    var cv = model.canopy, dep = model.spray.deposition, t = state.t;
+    $("#virus-lede").textContent = "Mean viable fraction of the deposited CrleGV in each zone, " + hoursLabel(t) + " after spraying.";
+    $("#map-virus-title").textContent = "Viable fraction " + hoursLabel(t) + " after spraying";
+    var values = ZONES.map(function (z) { return M.zoneViable(model.decay, dep, model.zones[z.key], t); });
+    $("#virus-tiles").innerHTML = ZONES.map(function (z, i) {
+      var sub = z.key === "outer" ? "Top metre of the canopy" : z.key === "microhabitat" ? "Refuge cells beside fruit" : z.key === "inner" ? "Bottom metre of the canopy" : "Middle metre of the canopy";
+      return tile(z.name, pct(values[i]), sub, z.token);
+    }).join("");
+    var viable = new Float64Array(dep.length);
+    for (var k = 0; k < dep.length; k++) viable[k] = Math.exp(-model.decay[k] * t);
+    var stops = themedStops(AQUA);
+    drawMap("#map-virus", viable, function (v) { return rampColor(stops, logFrac(v, VIABLE_DOMAIN)); }, {
+      label: "Map of viable CrleGV fraction across the canopy slice",
+      outline: cv.refuge,
+      tip: function (i, j, idx) {
+        return "<b>" + pct(viable[idx]) + " viable</b><br>UV " + pct(cv.intensity[idx]) + " of the canopy top" + (cv.refuge[idx] ? " · refuge" : "") + "<br>" + fmt2.format(cv.xC[i]) + " m across · " + fmt2.format(cv.zC[j]) + " m deep";
+      }
+    });
+    rampBar("#ramp-virus", stops, [0.001, 0.01, 0.1, 1], function (v) { return logFrac(v, VIABLE_DOMAIN); }, shortPct, "Viable fraction of the deposited virus");
+    renderCurves();
+  }
+
+  function renderCurves() {
+    var dep = model.spray.deposition, hours = [];
+    for (var h = 0; h <= 504; h += 6) hours.push(h);
+    var sets = ZONES.map(function (z) {
+      var mask = model.zones[z.key], lams = [];
+      for (var i = 0; i < mask.length; i++) if (mask[i] && dep[i] > 0) lams.push(model.decay[i]);
+      var vals = hours.map(function (t) {
+        var s = 0.0;
+        for (var n = 0; n < lams.length; n++) s += Math.exp(-lams[n] * t);
+        return lams.length ? s / lams.length : NaN;
+      });
+      return { zone: z, vals: vals };
+    });
+    $("#legend-curves").innerHTML = ZONES.map(function (z) {
+      return '<span><span class="key" style="background:var(' + z.token + ')"></span>' + z.name + "</span>";
+    }).join("");
+    var c = chartBox("#chart-curves", 320);
+    c.root.setAttribute("aria-label", "Mean viable fraction by zone over 21 days, log scale");
+    var m = { l: 52, r: 96, t: 10, b: 44 };
+    var yLo = -4, yHi = 0;
+    var X = function (hh) { return m.l + hh / 504 * (c.W - m.l - m.r); };
+    var Y = function (v) { var l = Math.log10(Math.max(v, 1e-4)); return m.t + (yHi - l) / (yHi - yLo) * (c.H - m.t - m.b); };
+    [1, 0.1, 0.01, 0.001, 0.0001].forEach(function (v) {
+      svg("line", { x1: m.l, x2: c.W - m.r, y1: Y(v), y2: Y(v), "class": "grid" }, c.root);
+      text(c.root, m.l - 6, Y(v), shortPct(v), "tick", "end");
+    });
+    [0, 7, 14, 21].forEach(function (dd) { text(c.root, X(dd * 24), c.H - m.b + 12, dd + " d", "tick", "middle"); });
+    text(c.root, m.l + (c.W - m.l - m.r) / 2, c.H - 10, "Days after spraying", "axis-title", "middle");
+    svg("line", { x1: m.l, x2: c.W - m.r, y1: c.H - m.b, y2: c.H - m.b, "class": "axis" }, c.root);
+    svg("line", { x1: X(state.t), x2: X(state.t), y1: m.t, y2: c.H - m.b, stroke: "var(--ink-2)", "stroke-width": 1 }, c.root);
+    text(c.root, X(state.t) + 4, m.t + 8, hoursLabel(state.t), "direct");
+    sets.forEach(function (s) {
+      var d = "";
+      s.vals.forEach(function (v, i) { d += (i ? "L" : "M") + X(hours[i]).toFixed(2) + " " + Y(v).toFixed(2); });
+      svg("path", { d: d, fill: "none", stroke: "var(" + s.zone.token + ")", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, c.root);
+    });
+    var labels = sets.map(function (s) { return { name: s.zone.name, y: Y(s.vals[s.vals.length - 1]), end: Y(s.vals[s.vals.length - 1]) }; });
+    labels.sort(function (a, b) { return a.y - b.y; });
+    for (var i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 14) labels[i].y = labels[i - 1].y + 14;
+    var overflow = labels[labels.length - 1].y - (c.H - m.b);
+    if (overflow > 0) labels.forEach(function (l) { l.y -= overflow; });
+    labels.forEach(function (l) {
+      var x0 = X(504);
+      if (Math.abs(l.y - l.end) > 1) svg("line", { x1: x0 + 2, y1: l.end, x2: x0 + 12, y2: l.y, "class": "leader" }, c.root);
+      text(c.root, x0 + 14, l.y, l.name, "direct");
+    });
+    var cross = svg("line", { x1: 0, x2: 0, y1: m.t, y2: c.H - m.b, "class": "crosshair", visibility: "hidden" }, c.root);
+    var hit = svg("rect", { x: m.l, y: m.t, width: c.W - m.l - m.r, height: c.H - m.t - m.b, fill: "transparent" }, c.root);
+    hit.addEventListener("pointermove", function (e) {
+      var r = c.root.getBoundingClientRect();
+      var hh = (e.clientX - r.left - m.l) / (c.W - m.l - m.r) * 504;
+      var i = Math.max(0, Math.min(hours.length - 1, Math.round(hh / 6)));
+      cross.setAttribute("x1", X(hours[i]));
+      cross.setAttribute("x2", X(hours[i]));
+      cross.setAttribute("visibility", "visible");
+      var html = "<b>" + hoursLabel(hours[i]) + " after spraying</b>";
+      sets.forEach(function (s) { html += '<div class="row"><span class="swatch" style="background:var(' + s.zone.token + ')"></span>' + s.zone.name + ": " + pct(s.vals[i]) + "</div>"; });
+      showTip(html, e.clientX, e.clientY);
+    });
+    hit.addEventListener("pointerleave", function () { cross.setAttribute("visibility", "hidden"); hideTip(); });
+    var keys = [24, 48, 72, 168, 336, 504];
+    $("#table-curves").innerHTML = "<table><thead><tr><th>Time</th>" + ZONES.map(function (z) { return '<th class="num">' + z.name + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      keys.map(function (kh) {
+        var i = kh / 6;
+        return "<tr><td>" + hoursLabel(kh) + "</td>" + sets.map(function (s) { return '<td class="num">' + pct(s.vals[i]) + "</td>"; }).join("") + "</tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  var FACTORS = [
+    { key: "v_uav", label: "Flight speed", unit: "m/s", state: "v", scale: 1 },
+    { key: "r_p", label: "Droplet radius", unit: "mm", state: "rp", scale: 1000 },
+    { key: "h_uav", label: "Height", unit: "m above canopy", state: "h", scale: 1 },
+    { key: "v_dw", label: "Downwash", unit: "m/s", state: "dw", scale: 1 }
+  ];
+  function renderEffects() {
+    var E = DATA.effects, grand = E.grand;
+    var c = chartBox("#chart-effects", 250);
+    c.root.setAttribute("aria-label", "Main effects of the four settings on inner-canopy deposit");
+    var m = { l: 46, r: 10, t: 34, b: 42 }, gap = 18;
+    var panelW = (c.W - m.l - m.r - gap * 3) / 4;
+    var changes = FACTORS.map(function (f) { return E.main[f.key].means.map(function (v) { return (v - grand) / grand * 100; }); });
+    var lim = Math.ceil(1.25 * Math.max.apply(null, changes.map(function (a) { return Math.max.apply(null, a.map(Math.abs)); })));
+    var Y = function (p) { return m.t + (lim - p) / (2 * lim) * (c.H - m.t - m.b); };
+    [-lim, -lim / 2, 0, lim / 2, lim].forEach(function (p) {
+      text(c.root, m.l - 6, Y(p), p === 0 ? "0" : (p > 0 ? "+" : "−") + Math.abs(p) + "%", "tick", "end");
+    });
+    FACTORS.forEach(function (f, n) {
+      var x0 = m.l + n * (panelW + gap);
+      var lv = E.main[f.key].levels.map(function (v) { return v * f.scale; });
+      var lo = lv[0], hi = lv[2], pad = (hi - lo) * 0.14;
+      var X = function (v) { return x0 + (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * panelW; };
+      [-lim, -lim / 2, lim / 2, lim].forEach(function (p) { svg("line", { x1: x0, x2: x0 + panelW, y1: Y(p), y2: Y(p), "class": "grid" }, c.root); });
+      svg("line", { x1: x0, x2: x0 + panelW, y1: Y(0), y2: Y(0), "class": "axis" }, c.root);
+      text(c.root, x0, 10, f.label, "axis-title", "start");
+      text(c.root, x0, 25, fmt0.format(E.main[f.key].share * 100) + "% of variation", "tick", "start");
+      lv.forEach(function (v) { text(c.root, X(v), c.H - m.b + 12, String(+v.toFixed(2)), "tick", "middle"); });
+      text(c.root, x0 + panelW / 2, c.H - 10, f.unit, "tick", "middle");
+      var current = state[f.state];
+      if (current >= lo - 1e-9 && current <= hi + 1e-9) {
+        svg("line", { x1: X(current), x2: X(current), y1: Y(lim), y2: Y(-lim), stroke: "var(--accent)", "stroke-width": 1, opacity: 0.6 }, c.root);
+      }
+      var d = lv.map(function (v, i) { return (i ? "L" : "M") + X(v).toFixed(2) + " " + Y(changes[n][i]).toFixed(2); }).join("");
+      svg("path", { d: d, fill: "none", stroke: "var(--accent)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, c.root);
+      lv.forEach(function (v, i) {
+        var on = sameNumber(v, current);
+        var dot = svg("circle", { cx: X(v), cy: Y(changes[n][i]), r: on ? 6.5 : 4.5, fill: "var(--accent)", stroke: "var(--surface)", "stroke-width": 2 }, c.root);
+        var hit = svg("circle", { cx: X(v), cy: Y(changes[n][i]), r: 14, fill: "transparent" }, c.root);
+        hit.addEventListener("pointermove", function (e) {
+          showTip("<b>" + f.label + " " + (+v.toFixed(2)) + " " + f.unit + "</b><br>Mean inner deposit " + fmt1.format(E.main[f.key].means[i]) + " per m²<br>" + (changes[n][i] >= 0 ? "+" : "−") + fmt1.format(Math.abs(changes[n][i])) + "% vs the mean of all 81 runs", e.clientX, e.clientY);
+        });
+        hit.addEventListener("pointerleave", hideTip);
+        if (on) dot.setAttribute("aria-label", "Current setting");
+      });
+    });
+    $("#table-effects").innerHTML = "<table><thead><tr><th>Setting</th><th class=\"num\">Low</th><th class=\"num\">Central</th><th class=\"num\">High</th><th class=\"num\">Share</th><th class=\"num\">Sensitivity S</th></tr></thead><tbody>" +
+      FACTORS.map(function (f) {
+        var e = E.main[f.key];
+        return "<tr><td>" + f.label + " (" + f.unit + ")</td>" + e.means.map(function (v, i) { return '<td class="num">' + (+ (e.levels[i] * f.scale).toFixed(2)) + ": " + fmt1.format(v) + "</td>"; }).join("") +
+          '<td class="num">' + fmt1.format(e.share * 100) + '%</td><td class="num">' + (e.S >= 0 ? "+" : "−") + fmt3.format(Math.abs(e.S)) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+  function renderShares() {
+    var E = DATA.effects;
+    var rows = FACTORS.map(function (f) { return { label: f.label, v: E.main[f.key].share * 100, token: "--accent" }; });
+    var inter = 0;
+    for (var k in E.inter) inter += E.inter[k];
+    rows.push({ label: "Pairs of settings", v: inter * 100, token: "--muted" });
+    rows.push({ label: "Three or more settings", v: E.higher * 100, token: "--muted" });
+    rows.sort(function (a, b) { return b.v - a.v; });
+    var rowH = 30;
+    var c = chartBox("#chart-shares", rows.length * rowH + 30);
+    c.root.setAttribute("aria-label", "Share of variation in inner-canopy deposit by setting");
+    var m = { l: 170, r: 56, t: 6, b: 24 };
+    var maxV = Math.max.apply(null, rows.map(function (r) { return r.v; }));
+    var X = function (v) { return m.l + v / (maxV * 1.1) * (c.W - m.l - m.r); };
+    rows.forEach(function (r, i) {
+      var y = m.t + i * rowH + rowH / 2;
+      text(c.root, m.l - 10, y, r.label, "direct", "end");
+      var w = Math.max(1, X(r.v) - m.l), h = 14, rad = Math.min(4, w / 2);
+      var x0 = m.l, y0 = y - h / 2;
+      var d = "M" + x0 + " " + y0 + "H" + (x0 + w - rad) + "Q" + (x0 + w) + " " + y0 + " " + (x0 + w) + " " + (y0 + rad) + "V" + (y0 + h - rad) + "Q" + (x0 + w) + " " + (y0 + h) + " " + (x0 + w - rad) + " " + (y0 + h) + "H" + x0 + "Z";
+      svg("path", { d: d, fill: "var(" + r.token + ")" }, c.root);
+      text(c.root, x0 + w + 6, y, fmt1.format(r.v) + "%", "tick", "start");
+    });
+    svg("line", { x1: m.l, x2: m.l, y1: m.t, y2: m.t + rows.length * rowH, "class": "axis" }, c.root);
+  }
+  function renderCallouts() {
+    var runs = DATA.runs;
+    var best = 0, worst = 0;
+    runs.forEach(function (r, i) { if (r[6] > runs[best][6]) best = i; if (r[6] < runs[worst][6]) worst = i; });
+    var describe = function (r) { return r[0] + " m above the canopy, " + r[1] + " m/s, downwash " + r[2] + " m/s, droplet radius " + r[3] + " mm"; };
+    $("#study-callouts").innerHTML =
+      '<div class="callout"><h3>Best run</h3><p><strong>' + fmt1.format(runs[best][6]) + " per m²</strong> in the inner canopy at " + describe(runs[best]) + ".</p></div>" +
+      '<div class="callout"><h3>Worst run</h3><p><strong>' + fmt1.format(runs[worst][6]) + " per m²</strong> at " + describe(runs[worst]) + ".</p></div>" +
+      '<div class="callout"><h3>Why</h3><p>Flying slower and higher, with finer droplets, gives the spray time to lose the drone\'s forward speed before it reaches the trees. It then crosses the foliage more steeply, so less is caught near the top. Downwash barely matters because capture depends on how far a droplet travels through leaves, not how fast.</p></div>';
+    return { best: runs[best], worst: runs[worst] };
+  }
+  function renderValidation() {
+    var V = DATA.validation;
+    var status = function (ok) { return ok ? '<span class="status pass"><span aria-hidden="true">✓</span>Pass</span>' : '<span class="status fail"><span aria-hidden="true">✕</span>Fail</span>'; };
+    var rows = V.t1.rows.map(function (r) {
+      return ["1 · Fall speed, " + r.d + " mm drop", "Measured " + fmt2.format(r.measured) + " m/s (Gunn and Kinzer, 1949)", fmt3.format(r.simulated) + " m/s (" + (r.dev >= 0 ? "+" : "−") + fmt1.format(Math.abs(r.dev) * 100) + "%)", "Within ±" + fmt0.format(V.t1.tolerance * 100) + "%", status(r.ok)];
+    });
+    rows.push(["2 · Inner ÷ outer deposit", "UAV citrus field studies, " + fmt3.format(V.t2.field[0]) + "–" + fmt3.format(V.t2.field[1]), fmt3.format(V.t2.ratio), fmt3.format(V.t2.band[0]) + "–" + fmt3.format(V.t2.band[1]), status(V.t2.ok)]);
+    rows.push(["3 · Outer viability at 24 h", "24 h half-life in full sun", fmt3.format(V.t3.value), fmt2.format(V.t3.band[0]) + "–" + fmt2.format(V.t3.band[1]), status(V.t3.ok)]);
+    rows.push(["4 · Inner ÷ outer viability at 21 days", "15× LD₅₀ contrast, sun vs shade", fmt2.format(V.t4.ratio), (+V.t4.band[0]) + "–" + (+V.t4.band[1]) + ", inner above outer throughout", status(V.t4.ok)]);
+    $("#table-validation").innerHTML = "<table><thead><tr><th>Target</th><th>Benchmark</th><th>Model</th><th>Pass range</th><th>Result</th></tr></thead><tbody>" +
+      rows.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
+  }
+  function renderAbout() {
+    $("#about").innerHTML =
+      "<p>The spray and survival sections rerun a JavaScript copy of the Python model (crlegv-sim, version " + DATA.commit + ") in your browser. When the page opens it runs the central settings and compares the result with the saved Python run; the chip at the top shows whether they match. The study and validation sections use the saved Python results.</p>" +
+      "<ul>" +
+      "<li>Spray capture depends on the distance a droplet travels through leaves, not on its speed. That is why downwash has little effect and why the model sends less spray to the inner canopy than field studies measure (Target 2).</li>" +
+      "<li>Downwash values were measured under a hovering drone on a test rig (Yallappa et al., 2024) and are applied at every flight speed.</li>" +
+      "<li>Thin horizontal stripes in the deposit map and jaggedness in the depth profile come from how the model assigns each step of a droplet's path to a grid cell. Zone totals are not affected.</li>" +
+      "<li>Canopy density and the half-lives were not varied in the study. Changing them here shows what the model would do, not a study result.</li>" +
+      "</ul>";
+  }
+
+  var pending = null;
+  var RANK = { virus: 0, spray: 1, canopy: 2 };
+  function schedule(group) {
+    var level = group === "canopy" || group === "virus" ? group : "spray";
+    if (!pending || RANK[level] > RANK[pending]) pending = level;
+    document.body.classList.add("busy");
+    clearTimeout(schedule.timer);
+    schedule.timer = setTimeout(function () {
+      var level = pending;
+      pending = null;
+      requestAnimationFrame(function () {
+        if (level === "canopy") { computeCanopy(); computeSpray(); computeVirus(); renderSpray(); renderVirus(); }
+        else if (level === "spray") { computeSpray(); renderSpray(); renderVirus(); }
+        else { computeVirus(); renderVirus(); }
+        renderEffects();
+        document.body.classList.remove("busy");
+      });
+    }, 90);
+  }
+  function renderSpray() { renderSprayTiles(); renderDepositMap(); renderProfile(); }
+  function renderAll() { renderSpray(); renderVirus(); renderEffects(); renderShares(); }
+  function applyPreset(values) {
+    Object.assign(state, values);
+    syncAll();
+    schedule("canopy");
+  }
+
+  buildControls();
+  syncAll();
+  baseline();
+  model.canopy = model.central.canopy;
+  model.zones = model.central.zones;
+  model.spray = model.central.spray;
+  model.profile = model.central.profile;
+  computeVirus();
+  renderMeta();
+  var extremes = renderCallouts();
+  renderValidation();
+  renderAbout();
+  renderAll();
+  var runState = function (r) { return { h: r[0], v: r[1], dw: r[2], rp: r[3], lai: CENTRAL.lai, k: CENTRAL.k }; };
+  $("#preset-central").addEventListener("click", function () { applyPreset({ h: CENTRAL.h, v: CENTRAL.v, dw: CENTRAL.dw, rp: CENTRAL.rp, lai: CENTRAL.lai, k: CENTRAL.k }); });
+  $("#preset-best").addEventListener("click", function () { applyPreset(runState(extremes.best)); });
+  $("#preset-worst").addEventListener("click", function () { applyPreset(runState(extremes.worst)); });
+  var redraw = function () { renderDepositMap(); renderVirus(); };
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mq.addEventListener) mq.addEventListener("change", redraw);
+  }
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.ResizeObserver) {
+    var last = 0;
+    new ResizeObserver(function (entries) {
+      var w = Math.round(entries[0].contentRect.width);
+      if (Math.abs(w - last) < 4) return;
+      last = w;
+      renderAll();
+    }).observe($(".readouts"));
+  }
+})();
+</script>
