@@ -16,7 +16,7 @@ See `02_Projects/DIS Final Submission - Action Plan.md` in the vault.
 | `src/survival.py` | Stage 3 — per-cell CrleGV decay and viable fraction |
 | `src/run.py` | Executes all three stages for one parameter set, persists to `runs/` |
 | `src/sweep.py` | 81-run full factorial and its effect analysis (D5) |
-| `src/figures.py` | Figure generation for the results chapter |
+| `src/figures.py` | Figure set for the results chapter (W4.4) and the validation table, written to `figures/` |
 | `src/validate.py` | Validation targets against published data, written to `runs/validation/` |
 | `validation/` | Sanity checks that must pass before any result is trusted |
 
@@ -28,6 +28,7 @@ python -m pytest validation -q
 PYTHONPATH=src python src/run.py
 PYTHONPATH=src python src/validate.py
 PYTHONPATH=src python src/sweep.py
+PYTHONPATH=src python src/figures.py
 ```
 
 ## Design decisions encoded here
