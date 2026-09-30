@@ -62,8 +62,8 @@ def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
     The domain wraps horizontally. The cross-section represents a slice of a
     continuous orchard row, so a droplet carried past the right-hand edge by
     the UAV forward velocity re-enters at the left rather than being lost.
-    Without this the drift over a five-metre fall exceeds the domain width and
-    the upwind third of the canopy receives no deposition at all.
+    Without this, the strip at the upwind edge that droplets drift across
+    before reaching the canopy receives no deposition at all.
     """
     dt = P.TIME_STEP.value if dt is None else dt
 

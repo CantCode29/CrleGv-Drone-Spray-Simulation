@@ -52,7 +52,9 @@ requires. This also relaxes the boundary assumption in §3.9 from "equivalent
 depth" to "equivalent depth and equivalent local occlusion".
 
 **D4 — downwash field.** Full strength above the canopy, decaying as
-`exp(−z/0.5 m)` with depth. An assumption, not a sourced profile.
+`exp(−z/0.5 m)` with depth. The full-strength value is sourced (Yallappa et
+al., 2024, Figure 12, measured in hover); the decay with depth is an
+assumption, not a sourced profile.
 
 **D5 — sensitivity design.** An 81-run full factorial (three levels of each
 of the four sweep parameters) replaces the one-factor-at-a-time sweep. Runs
@@ -61,9 +63,11 @@ Effects are reported descriptively — each factor's and each two-factor
 interaction's share of the total variation, plus a normalised sensitivity
 from the level means — with no inferential tests, as §3.8 requires.
 
-**Horizontal wrapping.** The domain wraps in x. At 3 m/s forward velocity and a
-5 m release height the drift exceeds the 4 m domain width, so without wrapping
-the upwind third of the canopy receives no deposition at all.
+**Horizontal wrapping.** The domain wraps in x. Droplets leave the UAV at its
+forward speed, so each one drifts downwind before reaching the canopy — about
+1.3 m at the original 5 m release height and 0.4 m at the sourced central
+settings. Without wrapping, that strip at the upwind edge would receive no
+deposition at all.
 
 ## Findings that affect the chapter
 

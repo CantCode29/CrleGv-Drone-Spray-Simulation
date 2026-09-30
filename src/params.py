@@ -131,12 +131,15 @@ UAV_VELOCITY = Param(
 )
 
 DOWNWASH_VELOCITY = Param(
-    symbol="v_dw", value=1.0, unit="m/s",
-    source="NOT YET SOURCED - see plan item D6",
-    status=UNSOURCED, low=0.5, high=2.0,
-    note="Sweep levels 0.5 / 1.0 / 2.0 m/s. Currently proxied by the "
-         "Betancourt ejection speed range of 1-7 m/s, which is not a "
-         "downwash measurement. Candidate source: Yang et al. (2022).",
+    symbol="v_dw", value=8.5, unit="m/s",
+    source="Yallappa et al. (2024), Figure 12",
+    low=6.5, high=10.0,
+    note="Air speed straight below the centre of a six-rotor spraying UAV "
+         "at 1, 2 and 3 m below the rotors with 0, 5 and 10 kg payloads, "
+         "read from the bar chart to 0.1 m/s. Low, central and high are the "
+         "lowest, median and highest of the nine readings, rounded to "
+         "0.5 m/s. Measured in hover over a test rig; see the vault note "
+         "Drone Settings Sources (D6).",
 )
 
 DOMAIN_WIDTH = Param(
