@@ -46,7 +46,10 @@ SPRAY_DENSITY = Param(
 
 AIR_DENSITY = Param(
     symbol="rho_a", value=1.225, unit="kg/m3",
-    source="Betancourt et al. (2024)",
+    source="Standard value for dry air at sea level, 15 C, 101.325 kPa",
+    status=STANDARD,
+    note="Not given in Betancourt et al. (2024), to whom the submitted "
+         "chapter attributed it. Correction sheet item N4.",
 )
 
 AIR_VISCOSITY = Param(

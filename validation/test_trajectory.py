@@ -48,3 +48,14 @@ def test_deeper_canopy_reduces_penetration():
     dep_s, esc_s = trajectory.run(sparse, n=200)
     dep_d, esc_d = trajectory.run(dense, n=200)
     assert esc_d < esc_s
+
+
+def test_droplet_at_rest_in_still_air_feels_only_gravity():
+    acc = trajectory.droplet_acceleration(np.zeros(2), np.zeros(2), P.DROPLET_RADIUS.value)
+    assert np.allclose(acc, [0.0, P.GRAVITY.value])
+
+
+def test_drag_opposes_motion_relative_to_the_air():
+    acc = trajectory.droplet_acceleration(np.array([3.0, 0.0]), np.zeros(2), P.DROPLET_RADIUS.value)
+    assert acc[0] < 0.0
+    assert acc[1] == P.GRAVITY.value

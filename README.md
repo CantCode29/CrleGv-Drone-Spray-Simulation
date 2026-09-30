@@ -17,6 +17,7 @@ See `02_Projects/DIS Final Submission - Action Plan.md` in the vault.
 | `src/run.py` | Executes all three stages for one parameter set, persists to `runs/` |
 | `src/sweep.py` | OFAT sensitivity sweep and the confirmation factorial |
 | `src/figures.py` | Figure generation for the results chapter |
+| `src/validate.py` | Validation targets against published data, written to `runs/validation/` |
 | `validation/` | Sanity checks that must pass before any result is trusted |
 
 ## Run
@@ -25,6 +26,7 @@ See `02_Projects/DIS Final Submission - Action Plan.md` in the vault.
 pip install -r requirements.txt
 python -m pytest validation -q
 PYTHONPATH=src python src/run.py
+PYTHONPATH=src python src/validate.py
 ```
 
 ## Design decisions encoded here

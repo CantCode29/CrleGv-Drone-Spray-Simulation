@@ -35,6 +35,26 @@ def air_velocity(z: float, v_dw: float) -> np.ndarray:
     return np.array([0.0, v_dw * np.exp(-z / DOWNWASH_DECAY_LENGTH)])
 
 
+def droplet_acceleration(vel: np.ndarray, v_air: np.ndarray,
+                         r_p: float) -> np.ndarray:
+    rho_p = P.SPRAY_DENSITY.value
+    rho_a = P.AIR_DENSITY.value
+    mu_a = P.AIR_VISCOSITY.value
+    g = P.GRAVITY.value
+
+    d = 2.0 * r_p
+    area = np.pi * r_p ** 2
+    mass = rho_p * (4.0 / 3.0) * np.pi * r_p ** 3
+
+    rel = v_air - vel
+    speed = np.linalg.norm(rel)
+    re = rho_a * speed * d / mu_a
+    cd = drag_coefficient(re)
+
+    f_drag = 0.5 * rho_a * cd * area * speed * rel
+    return f_drag / mass + np.array([0.0, g])
+
+
 def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
                   v_dw: float, r_p: float, dt: float = None):
     """Track one droplet, depositing intercepted mass fraction cell by cell.
@@ -46,14 +66,6 @@ def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
     the upwind third of the canopy receives no deposition at all.
     """
     dt = P.TIME_STEP.value if dt is None else dt
-    rho_p = P.SPRAY_DENSITY.value
-    rho_a = P.AIR_DENSITY.value
-    mu_a = P.AIR_VISCOSITY.value
-    g = P.GRAVITY.value
-
-    d = 2.0 * r_p
-    area = np.pi * r_p ** 2
-    mass = rho_p * (4.0 / 3.0) * np.pi * r_p ** 3
 
     pos = np.array([x0, -altitude])
     vel = np.array([v_uav, v_dw])
@@ -62,14 +74,7 @@ def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
 
     max_steps = int(60.0 / dt)
     for _ in range(max_steps):
-        v_a = air_velocity(pos[1], v_dw)
-        rel = v_a - vel
-        speed = np.linalg.norm(rel)
-        re = rho_a * speed * d / mu_a
-        cd = drag_coefficient(re)
-
-        f_drag = 0.5 * rho_a * cd * area * speed * rel
-        acc = f_drag / mass + np.array([0.0, g])
+        acc = droplet_acceleration(vel, air_velocity(pos[1], v_dw), r_p)
 
         vel = vel + acc * dt
         new_pos = pos + vel * dt
