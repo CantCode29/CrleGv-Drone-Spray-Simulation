@@ -15,7 +15,7 @@ See `02_Projects/DIS Final Submission - Action Plan.md` in the vault.
 | `src/trajectory.py` | Stage 2 — droplet integration and fractional-mass interception |
 | `src/survival.py` | Stage 3 — per-cell CrleGV decay and viable fraction |
 | `src/run.py` | Executes all three stages for one parameter set, persists to `runs/` |
-| `src/sweep.py` | OFAT sensitivity sweep and the confirmation factorial |
+| `src/sweep.py` | 81-run full factorial and its effect analysis (D5) |
 | `src/figures.py` | Figure generation for the results chapter |
 | `src/validate.py` | Validation targets against published data, written to `runs/validation/` |
 | `validation/` | Sanity checks that must pass before any result is trusted |
@@ -27,6 +27,7 @@ pip install -r requirements.txt
 python -m pytest validation -q
 PYTHONPATH=src python src/run.py
 PYTHONPATH=src python src/validate.py
+PYTHONPATH=src python src/sweep.py
 ```
 
 ## Design decisions encoded here
@@ -52,6 +53,13 @@ depth" to "equivalent depth and equivalent local occlusion".
 
 **D4 — downwash field.** Full strength above the canopy, decaying as
 `exp(−z/0.5 m)` with depth. An assumption, not a sourced profile.
+
+**D5 — sensitivity design.** An 81-run full factorial (three levels of each
+of the four sweep parameters) replaces the one-factor-at-a-time sweep. Runs
+are ranked by inner-zone deposit per m², the quantity RQ2 asks to maximise.
+Effects are reported descriptively — each factor's and each two-factor
+interaction's share of the total variation, plus a normalised sensitivity
+from the level means — with no inferential tests, as §3.8 requires.
 
 **Horizontal wrapping.** The domain wraps in x. At 3 m/s forward velocity and a
 5 m release height the drift exceeds the 4 m domain width, so without wrapping

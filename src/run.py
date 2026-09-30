@@ -27,6 +27,7 @@ def execute(run_id: str, altitude=None, v_uav=None, v_dw=None, r_p=None,
         str(h): survival.zone_summary(deposition, maps[h], masks)
         for h in maps
     }
+    deposit_stats = zone_deposition(canopy, deposition, masks)
     runtime = time.time() - started
 
     record = {
@@ -45,7 +46,10 @@ def execute(run_id: str, altitude=None, v_uav=None, v_dw=None, r_p=None,
             "deposited_fraction": float(1.0 - escaped),
             "penetration_depth_m": penetration_depth(canopy, deposition),
             "refuge_cell_fraction": float(canopy.refuge.mean()),
+            "inner_deposit_per_m2": deposit_stats["inner"]["deposit_per_m2"],
+            "zone_deposition": deposit_stats,
             "zone_summaries": summaries,
+            "viability_vs_outer": viability_vs_outer(summaries),
         },
         "performance": {"runtime_s": round(runtime, 3)},
     }
@@ -63,6 +67,34 @@ def execute(run_id: str, altitude=None, v_uav=None, v_dw=None, r_p=None,
         )
 
     return record
+
+
+def zone_deposition(canopy, deposition, masks) -> dict:
+    cell_area = canopy.dx ** 2
+    out = {}
+    for zone, mask in masks.items():
+        cells = deposition[mask]
+        mean = float(cells.mean()) if cells.size else 0.0
+        out[zone] = {
+            "deposit_total": float(cells.sum()),
+            "deposit_per_m2": float(cells.sum() / (cells.size * cell_area)) if cells.size else 0.0,
+            "cv": float(cells.std() / mean) if mean > 0 else None,
+        }
+    return out
+
+
+def viability_vs_outer(summaries: dict) -> dict:
+    out = {}
+    for h, zones in summaries.items():
+        base = zones["outer"]["mean_viable_fraction"]
+        out[h] = {
+            zone: {
+                "difference_pp": 100.0 * (zones[zone]["mean_viable_fraction"] - base),
+                "ratio": zones[zone]["mean_viable_fraction"] / base,
+            }
+            for zone in ("inner", "microhabitat")
+        }
+    return out
 
 
 def penetration_depth(canopy, deposition, threshold_fraction=0.01) -> float:
