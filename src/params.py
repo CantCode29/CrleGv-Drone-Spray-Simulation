@@ -123,7 +123,7 @@ UAV_ALTITUDE = Param(
 
 UAV_VELOCITY = Param(
     symbol="v_uav", value=3.0, unit="m/s",
-    source="Han et al. (2026); Meng et al. (2022); Song et al. (2023); "
+    source="Han et al. (2026); Meng et al. (2022); Yan et al. (2023); "
            "Chen et al. (2025); Martinez-Guanter et al. (2019)",
     low=1.0, high=4.0,
     note="Lowest, median and highest flight speeds in citrus UAV field "
