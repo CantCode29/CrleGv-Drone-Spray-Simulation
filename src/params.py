@@ -112,18 +112,22 @@ TEMPERATURE = Param(
 )
 
 UAV_ALTITUDE = Param(
-    symbol="h_uav", value=5.0, unit="m",
-    source="NOT YET SOURCED - see plan item D6",
-    status=UNSOURCED, low=3.0, high=7.0,
-    note="Sweep levels 3 / 5 / 7 m above canopy. Candidate source: "
-         "Yang et al. (2022), Pest Management Science.",
+    symbol="h_uav", value=1.25, unit="m",
+    source="Han et al. (2026); Meng et al. (2022); Chen et al. (2025); "
+           "Martinez-Guanter et al. (2019)",
+    low=0.5, high=2.0,
+    note="Height above the canopy top. Low, central and high are the lowest, "
+         "median and highest heights flown in citrus UAV field studies; see "
+         "the vault note Drone Settings Sources (D6).",
 )
 
 UAV_VELOCITY = Param(
     symbol="v_uav", value=3.0, unit="m/s",
-    source="NOT YET SOURCED - see plan item D6",
-    status=UNSOURCED, low=1.0, high=5.0,
-    note="Sweep levels 1 / 3 / 5 m/s.",
+    source="Han et al. (2026); Meng et al. (2022); Song et al. (2023); "
+           "Chen et al. (2025); Martinez-Guanter et al. (2019)",
+    low=1.0, high=4.0,
+    note="Lowest, median and highest flight speeds in citrus UAV field "
+         "studies; see the vault note Drone Settings Sources (D6).",
 )
 
 DOWNWASH_VELOCITY = Param(

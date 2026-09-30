@@ -3,6 +3,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import itertools
 import pytest
+import params as P
 import sweep
 
 
@@ -41,7 +42,8 @@ def test_sensitivity_of_a_proportional_response_is_one():
 
 
 def test_best_run_maximises_the_metric():
-    records = synthetic(lambda k: -abs(k["altitude"] - 5.0) - k["v_dw"])
+    central = P.UAV_ALTITUDE.value
+    records = synthetic(lambda k: -abs(k["altitude"] - central) - k["v_dw"])
     top = sweep.best(records)
-    assert top["inputs"]["altitude"] == 5.0
+    assert top["inputs"]["altitude"] == central
     assert top["inputs"]["v_dw"] == min(r["inputs"]["v_dw"] for r in records)
