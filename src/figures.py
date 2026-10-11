@@ -279,13 +279,14 @@ def main_effects(summary, path, dpi=DPI):
     fig, axes = plt.subplots(1, len(FACTORS), figsize=(TEXT_WIDTH_IN, 2.4), sharey=True)
     for ax, (key, _, label, unit, scale) in zip(axes, FACTORS):
         levels = np.asarray(main[key]["levels"], dtype=float) * scale
-        pad = 0.18 * (levels.max() - levels.min())
+        positions = np.arange(len(levels), dtype=float) if levels.max() / levels.min() > 4.0 else levels
+        pad = 0.18 * (positions.max() - positions.min())
         ax.axhline(0.0, color=AXIS, lw=0.6)
-        ax.plot(levels, change[key], color=SERIES, lw=1.5, marker="o", ms=5.5,
+        ax.plot(positions, change[key], color=SERIES, lw=1.5, marker="o", ms=5.5,
                 mfc=SERIES, mec=SURFACE, mew=1.2)
-        ax.set_xticks(levels)
+        ax.set_xlim(positions.min() - pad, positions.max() + pad)
+        ax.set_xticks(positions)
         ax.set_xticklabels([f"{v:g}" for v in levels])
-        ax.set_xlim(levels.min() - pad, levels.max() + pad)
         ax.set_xlabel(unit)
         ax.set_title(label, fontsize=8.5)
         ax.text(0.03, 0.97, f"{100.0 * main[key]['share']:.0f}% of variation", transform=ax.transAxes,
