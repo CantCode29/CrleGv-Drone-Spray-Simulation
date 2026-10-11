@@ -63,7 +63,7 @@ def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
     before reaching the canopy receives no deposition at all.
     """
     dt = P.TIME_STEP.value if dt is None else dt
-    efficiency = P.INTERCEPTION_EFFICIENCY.value
+    efficiency = canopy.k
     fruit_capture = P.FRUIT_INTERCEPTION.value
 
     pos = np.array([x0, -altitude])

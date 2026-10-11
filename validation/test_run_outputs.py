@@ -14,6 +14,13 @@ def test_depth_zones_account_for_all_deposited_mass():
     assert out["inner_deposit_per_m2"] == zones["inner"]["deposit_per_m2"]
 
 
+def test_zone_shares_add_up_to_the_deposited_share():
+    out = run.execute("check", n=100, persist=False)["outputs"]
+    depth_zones = sum(out["zone_share_pct"][z] for z in ("outer", "mid", "inner"))
+    assert depth_zones == pytest.approx(100 * out["deposited_fraction"])
+    assert out["inner_share_pct"] == out["zone_share_pct"]["inner"]
+
+
 def test_viability_comparison_is_against_the_outer_zone():
     out = run.execute("check", n=100, persist=False)["outputs"]
     for h, zones in out["viability_vs_outer"].items():

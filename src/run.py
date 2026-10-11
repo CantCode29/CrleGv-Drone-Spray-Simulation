@@ -1,6 +1,8 @@
 """Driver - executes the three stages for one parameter set and persists it."""
 
 import json
+import os
+import resource
 import time
 from pathlib import Path
 
@@ -11,7 +13,7 @@ import grid
 import trajectory
 import survival
 
-RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
+RUNS_DIR = Path(os.environ.get("CRLEGV_RUNS_DIR", Path(__file__).resolve().parent.parent / "runs"))
 
 
 def execute(run_id: str, altitude=None, v_uav=None, v_dw=None, r_p=None,
@@ -28,7 +30,10 @@ def execute(run_id: str, altitude=None, v_uav=None, v_dw=None, r_p=None,
         for h in maps
     }
     deposit_stats = zone_deposition(canopy, deposition, masks)
+    released = n if n is not None else int(P.N_DROPLETS.value)
+    shares = {zone: 100.0 * stats["deposit_total"] / released for zone, stats in deposit_stats.items()}
     runtime = time.time() - started
+    peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
     record = {
         "run_id": run_id,
@@ -47,11 +52,13 @@ def execute(run_id: str, altitude=None, v_uav=None, v_dw=None, r_p=None,
             "penetration_depth_m": penetration_depth(canopy, deposition),
             "refuge_cell_fraction": float(canopy.refuge.mean()),
             "inner_deposit_per_m2": deposit_stats["inner"]["deposit_per_m2"],
+            "inner_share_pct": shares["inner"],
+            "zone_share_pct": shares,
             "zone_deposition": deposit_stats,
             "zone_summaries": summaries,
             "viability_vs_outer": viability_vs_outer(summaries),
         },
-        "performance": {"runtime_s": round(runtime, 3)},
+        "performance": {"runtime_s": round(runtime, 3), "peak_memory_mb": round(peak_mb, 1)},
     }
 
     if persist:

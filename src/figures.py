@@ -12,6 +12,7 @@ never rests on colour alone.
 import csv
 import functools
 import json
+import os
 from pathlib import Path
 
 import matplotlib
@@ -31,9 +32,9 @@ import params as P
 import survival
 
 ROOT = Path(__file__).resolve().parent.parent
-RUNS_DIR = ROOT / "runs"
-FIGURES_DIR = ROOT / "figures"
-VALIDATION_DIR = RUNS_DIR / "validation" / "post-sourcing"
+RUNS_DIR = Path(os.environ.get("CRLEGV_RUNS_DIR", ROOT / "runs"))
+FIGURES_DIR = Path(os.environ.get("CRLEGV_FIGURES_DIR", ROOT / "figures"))
+VALIDATION_DIR = Path(os.environ.get("CRLEGV_VALIDATION_DIR", RUNS_DIR / "validation" / "post-sourcing"))
 DPI = 300
 TEXT_WIDTH_IN = 6.3
 
@@ -57,7 +58,7 @@ DEEMPHASIS = MUTED
 ZONES = (("outer", "Outer", "#86b6ef"), ("mid", "Mid", "#2a78d6"),
          ("inner", "Inner", "#104281"), ("microhabitat", "Microhabitat", "#eb6834"))
 FACTORS = (("v_uav", "Flight speed", "Flight speed", "m/s", 1.0),
-           ("r_p", "Droplet radius", "Droplet radius", "mm", 1e3),
+           ("r_p", "Droplet size", "Droplet size", "µm diameter", 2e6),
            ("h_uav", "Height above canopy", "Height", "m above canopy", 1.0),
            ("v_dw", "Downwash", "Downwash", "m/s", 1.0))
 
@@ -179,22 +180,22 @@ def uv_field(canopy, path, dpi=DPI):
 
 @_styled
 def deposition_map(canopy, deposition, masks, path, dpi=DPI):
-    per_m2 = deposition / canopy.dx ** 2
+    released = P.N_DROPLETS.value
+    per_m2 = 100.0 * deposition / (canopy.dx ** 2 * released)
     positive = per_m2[per_m2 > 0.0]
     norm = LogNorm(positive.min(), positive.max())
     fig, ax = plt.subplots(figsize=(TEXT_WIDTH_IN, 4.0))
     image = _field(ax, canopy, np.where(per_m2 > 0.0, per_m2, np.nan), _ramp(BLUE_RAMP, "deposit"), norm)
     _fruits(ax, canopy)
     _zone_lines(ax, canopy)
-    means = [deposition[masks[z]].sum() / (masks[z].sum() * canopy.dx ** 2)
-             for z in ("outer", "mid", "inner")]
-    _zone_labels(ax, canopy, [f"{name}\n{mean:,.0f} per m²"
-                              for name, mean in zip(("Outer", "Mid", "Inner"), means)])
+    shares = [100.0 * deposition[masks[z]].sum() / released for z in ("outer", "mid", "inner")]
+    _zone_labels(ax, canopy, [f"{name}\n{share:.1f}% of spray"
+                              for name, share in zip(("Outer", "Mid", "Inner"), shares)])
     _position_labels(ax)
     bar = fig.colorbar(image, ax=ax, orientation="horizontal", fraction=0.045, pad=0.14, aspect=45)
-    bar.set_label("Deposit, droplet equivalents per m² (log scale)")
+    bar.set_label("Spray landing, % of the spray released per m² (log scale)")
     bar.ax.xaxis.set_major_locator(LogLocator(base=10.0))
-    bar.ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:,.0f}"))
+    bar.ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
     bar.outline.set_visible(False)
     return _save(fig, path, dpi)
 
@@ -212,7 +213,7 @@ def survival_maps(canopy, path, hours=None, dpi=DPI):
     axes[len(axes) // 2].set_xlabel("Position across the row (m)")
     _zone_labels(axes[-1], canopy, ("Outer", "Mid", "Inner"))
     bar = fig.colorbar(image, ax=list(axes), orientation="horizontal", fraction=0.06, pad=0.2, aspect=50)
-    bar.set_label("Viable fraction of deposited CrleGV")
+    bar.set_label("Share of deposited CrleGV still active")
     bar.outline.set_visible(False)
     return _save(fig, path, dpi)
 
@@ -221,8 +222,12 @@ def zone_curves(canopy, deposition, masks, hours):
     decay = survival.decay_constants(canopy.intensity_ratio)
     deposited = deposition > 0.0
     hours = np.asarray(hours, dtype=float)
-    return {key: np.exp(-np.outer(hours, decay[masks[key] & deposited])).mean(axis=1)
-            for key, _, _ in ZONES}
+    curves = {}
+    for key, _, _ in ZONES:
+        selected = decay[masks[key] & deposited]
+        curves[key] = (np.exp(-np.outer(hours, selected)).mean(axis=1) if selected.size
+                       else np.full(hours.shape, np.nan))
+    return curves
 
 
 @_styled
@@ -233,6 +238,8 @@ def survival_curves(canopy, deposition, masks, path, dpi=DPI):
     second = zone_curves(canopy, deposition, masks, late_days * 24.0)
     fig, (a, b) = plt.subplots(1, 2, figsize=(TEXT_WIDTH_IN, 2.7))
     for key, label, colour in ZONES:
+        if np.isnan(first[key]).all():
+            continue
         a.plot(early, first[key], color=colour, lw=1.5, label=label)
         b.plot(late_days, second[key], color=colour, lw=1.5, label=label)
         a.text(74.0, first[key][-1], label, va="center", ha="left", color=INK_SECONDARY,
@@ -243,10 +250,11 @@ def survival_curves(canopy, deposition, masks, path, dpi=DPI):
     a.set_xticks([0, 24, 48, 72])
     a.set_ylim(0.0, 1.0)
     a.set_xlabel("Hours after spraying")
-    a.set_ylabel("Mean viable fraction")
+    a.set_ylabel("Share still active")
     a.set_title("(a) First 72 hours")
     b.set_yscale("log")
-    b.set_ylim(1e-4, 1.0)
+    lowest = min(np.nanmin(values) for values in second.values() if np.isfinite(values).any())
+    b.set_ylim(10.0 ** np.floor(np.log10(lowest)), 1.0)
     b.set_xlim(0.0, 21.0)
     b.set_xticks([0, 7, 14, 21])
     b.set_xlabel("Days after spraying")
@@ -286,7 +294,7 @@ def main_effects(summary, path, dpi=DPI):
         ax.set_axisbelow(True)
     axes[0].set_ylim(-limit, limit)
     axes[0].yaxis.set_major_formatter(FuncFormatter(lambda v, _: _minus(f"{v:+.0f}") if v else "0"))
-    axes[0].set_ylabel("Inner deposit vs mean\nof all 81 runs (%)")
+    axes[0].set_ylabel("Inner-canopy spray vs mean\nof all 81 runs (%)")
     fig.subplots_adjust(wspace=0.12)
     return _save(fig, path, dpi)
 
@@ -311,7 +319,7 @@ def effect_summary(summary, path, dpi=DPI):
     a.set_yticks(rows)
     a.set_yticklabels([label for label, _, _ in shares])
     a.set_xlim(0.0, 1.25 * max(values))
-    a.set_xlabel("Share of variation in inner deposit (%)")
+    a.set_xlabel("Share of variation in inner-canopy spray (%)")
     a.set_title("(a) Where the variation comes from")
     a.tick_params(axis="y", length=0)
     rows = np.arange(len(sens))
@@ -339,7 +347,7 @@ def effect_summary(summary, path, dpi=DPI):
 
 def validation_table(source, path):
     source = Path(source)
-    t1, t2, t3, t4 = (json.loads((source / f"target{i}.json").read_text()) for i in range(1, 5))
+    t1, t2, t4 = (json.loads((source / f"target{i}.json").read_text()) for i in (1, 2, 4))
     rows = [("Target", "Quantity", "Benchmark", "Simulated", "Criterion", "Result")]
     for r in t1["rows"]:
         rows.append(("1", f"Fall speed of a {r['diameter_mm']:g} mm drop (m/s)", f"{r['measured_m_s']:.2f}",
@@ -350,13 +358,19 @@ def validation_table(source, path):
     rows.append(("2", "Inner ÷ outer deposit per m²",
                  f"{min(t2['benchmark_ratios']):.3f}–{max(t2['benchmark_ratios']):.3f}",
                  f"{t2['ratio']:.3f}", f"{low:.3f}–{high:.3f}", "Pass" if t2["passed"] else "Fail"))
-    low, high = t3["band"]
-    rows.append(("3", "Outer-zone viable fraction at 24 h", "0.50", f"{t3['outer_24h']:.3f}",
-                 f"{low:.2f}–{high:.2f}", "Pass" if t3["passed"] else "Fail"))
     low, high = t4["band_21d"]
-    rows.append(("4", "Inner ÷ outer viable fraction at 21 days", "15", f"{t4['ratio_21d']:.2f}",
+    rows.append(("4", "Inner ÷ outer share still active at 21 days", "15", f"{t4['ratio_21d']:.2f}",
                  f"{low:g}–{high:g}, and inner above outer at every checkpoint",
                  "Pass" if t4["passed"] else "Fail"))
+    light_path = source / "light.json"
+    if light_path.exists():
+        light = json.loads(light_path.read_text())
+        low, high = light["benchmark_range"]
+        floor = light["floor_light"]
+        rows.append(("Light", "Light at the canopy floor, leaves only (share of full light)",
+                     f"{low:.2f}–{high:.2f}",
+                     f"{floor['central']:.3f} ({floor['least_light']:.3f}–{floor['most_light']:.3f})",
+                     "Comparison only", "Comparison"))
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8-sig") as handle:

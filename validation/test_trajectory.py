@@ -27,7 +27,7 @@ def test_terminal_velocity_is_physical():
     dt = 0.001
     rho_p, rho_a, mu_a, g = (P.SPRAY_DENSITY.value, P.AIR_DENSITY.value,
                              P.AIR_VISCOSITY.value, P.GRAVITY.value)
-    r_p = P.DROPLET_RADIUS.value
+    r_p = 0.5e-3
     d, area = 2 * r_p, np.pi * r_p ** 2
     mass = rho_p * (4 / 3) * np.pi * r_p ** 3
     v = 0.0

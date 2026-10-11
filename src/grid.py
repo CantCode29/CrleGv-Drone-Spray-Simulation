@@ -33,6 +33,7 @@ class Canopy:
     intensity_ratio: np.ndarray
     refuge: np.ndarray
     fruit_mask: np.ndarray
+    k: float
     fruits: List[Fruit] = field(default_factory=list)
 
     def cell_of(self, x: float, z: float) -> Tuple[int, int]:
@@ -110,7 +111,7 @@ def build(lai_total: float = None,
         x_centres=x_centres, z_centres=z_centres,
         lad=lad, optical_depth=optical_depth,
         intensity_ratio=intensity_ratio, refuge=refuge,
-        fruit_mask=fruit_mask, fruits=fruits,
+        fruit_mask=fruit_mask, k=k, fruits=fruits,
     )
 
 

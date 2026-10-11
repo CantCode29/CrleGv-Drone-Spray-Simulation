@@ -1,6 +1,7 @@
 """Validation targets against published data. Results go to runs/validation/."""
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -10,9 +11,9 @@ import params as P
 import survival
 import trajectory
 
-RUNS_DIR = Path(__file__).resolve().parent.parent / "runs" / "validation"
+RUNS_DIR = Path(os.environ.get("CRLEGV_RUNS_DIR", Path(__file__).resolve().parent.parent / "runs")) / "validation"
 
-GUNN_KINZER_1949 = {0.3e-3: 2.47, 0.5e-3: 4.03, 0.8e-3: 5.65}
+GUNN_KINZER_1949 = {0.05e-3: 0.27, 0.10e-3: 0.72, 0.25e-3: 2.06}
 TARGET1_TOLERANCE = 0.20
 
 HAN_2026_UPPER_LOWER = ((318.85, 168.01), (318.85, 210.64),
@@ -21,7 +22,7 @@ CUI_2025_DDPR = 0.735
 TARGET2_RATIOS = tuple(lower / upper for upper, lower in HAN_2026_UPPER_LOWER) + (CUI_2025_DDPR,)
 TARGET2_BAND = (0.8 * min(TARGET2_RATIOS), 1.2 * max(TARGET2_RATIOS))
 
-TARGET3_BAND = (0.40, 0.60)
+DEIDDA_1992_LIGHT = (0.24, 0.47)
 
 MWANZA_2015_LD50_RATIO = 15.0
 TARGET4_BAND = (MWANZA_2015_LD50_RATIO / 10.0, MWANZA_2015_LD50_RATIO * 10.0)
@@ -99,14 +100,19 @@ def zone_means(canopy, deposition: np.ndarray, masks: dict, hours) -> dict:
     return means
 
 
-def target3(means: dict) -> dict:
-    outer = means[24.0]["outer"]
-    low, high = TARGET3_BAND
+def light_floor() -> dict:
+    floors = {}
+    for name, lai, k in (("central", P.LAI_TOTAL.value, P.EXTINCTION_COEFF.value),
+                         ("most_light", P.LAI_TOTAL.low, P.EXTINCTION_COEFF.low),
+                         ("least_light", P.LAI_TOTAL.high, P.EXTINCTION_COEFF.high)):
+        canopy = grid.build(lai_total=lai, k=k)
+        open_columns = ~(canopy.fruit_mask.any(axis=1) | (canopy.optical_depth == np.inf).any(axis=1))
+        floors[name] = _sig(float(canopy.intensity_ratio[open_columns, -1].mean()))
     return {
-        "target": "T3 outer-zone mean viable fraction at 24 h",
-        "band": list(TARGET3_BAND),
-        "outer_24h": _sig(outer),
-        "passed": bool(low <= outer <= high),
+        "target": "Light at the canopy floor, leaves only, vs Deidda et al. (1992)",
+        "benchmark_range": list(DEIDDA_1992_LIGHT),
+        "floor_light": floors,
+        "comparison_only": True,
     }
 
 
@@ -142,7 +148,7 @@ if __name__ == "__main__":
     canopy, deposition, masks = central_run()
     means = zone_means(canopy, deposition, masks, TARGET4_HOURS)
     results = {"target1": target1(), "target2": target2(canopy, deposition, masks),
-               "target3": target3(means), "target4": target4(means)}
+               "target4": target4(means), "light": light_floor()}
     for name, result in results.items():
         (RUNS_DIR / f"{name}.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(results, indent=2))

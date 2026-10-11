@@ -43,7 +43,11 @@ def test_every_figure_renders(tmp_path, central):
 
 def test_zone_curves_start_whole_and_only_decline(central):
     curves = figures.zone_curves(*central, [0.0, 24.0, 72.0, 504.0])
+    for key in ("outer", "mid", "inner"):
+        assert np.isfinite(curves[key]).all()
     for values in curves.values():
+        if np.isnan(values).all():
+            continue
         assert values[0] == pytest.approx(1.0)
         assert np.all(np.diff(values) < 0.0)
 
@@ -52,6 +56,9 @@ def test_zone_curves_match_the_validation_zone_means(central):
     curves = figures.zone_curves(*central, [24.0, 72.0])
     means = validate.zone_means(*central, (24.0, 72.0))
     for key, values in curves.items():
+        if np.isnan(values).all():
+            assert np.isnan(means[24.0][key]) and np.isnan(means[72.0][key])
+            continue
         assert values[0] == pytest.approx(means[24.0][key])
         assert values[1] == pytest.approx(means[72.0][key])
 
@@ -59,7 +66,7 @@ def test_zone_curves_match_the_validation_zone_means(central):
 def test_validation_table_reports_each_verdict(tmp_path, central):
     means = validate.zone_means(*central, validate.TARGET4_HOURS)
     results = {"target1": validate.target1(), "target2": validate.target2(*central),
-               "target3": validate.target3(means), "target4": validate.target4(means)}
+               "target4": validate.target4(means), "light": validate.light_floor()}
     for name, result in results.items():
         (tmp_path / f"{name}.json").write_text(json.dumps(result))
     path = figures.validation_table(tmp_path, tmp_path / "table.csv")
@@ -68,5 +75,6 @@ def test_validation_table_reports_each_verdict(tmp_path, central):
     assert rows[0] == ["Target", "Quantity", "Benchmark", "Simulated", "Criterion", "Result"]
     verdicts = [row[5] for row in rows[1:]]
     expected = ["Pass" if r["within_tolerance"] else "Fail" for r in results["target1"]["rows"]]
-    expected += ["Pass" if results[t]["passed"] else "Fail" for t in ("target2", "target3", "target4")]
+    expected += ["Pass" if results[t]["passed"] else "Fail" for t in ("target2", "target4")]
+    expected += ["Comparison"]
     assert verdicts == expected

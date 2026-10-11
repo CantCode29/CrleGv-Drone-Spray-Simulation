@@ -32,11 +32,12 @@ class Param:
 
 
 DROPLET_RADIUS = Param(
-    symbol="r_p", value=0.5e-3, unit="m",
-    source="Betancourt et al. (2024)",
-    low=0.3e-3, high=0.8e-3,
-    note="Sweep levels 0.3 / 0.5 / 0.8 mm. Reported as radius throughout; "
-         "RQ2 wording corrected from diameter to radius to match.",
+    symbol="r_p", value=70.0e-6, unit="m",
+    source="Yan et al. (2023); Grant et al. (2022); Chen et al. (2020)",
+    low=52.5e-6, high=263.5e-6,
+    note="Diameters 105 / 140 / 527 um: the lowest, median and highest volume "
+         "median diameters reported for drone sprays, under a rule set before "
+         "searching. Radius is half the diameter.",
 )
 
 SPRAY_DENSITY = Param(
@@ -46,15 +47,15 @@ SPRAY_DENSITY = Param(
 
 AIR_DENSITY = Param(
     symbol="rho_a", value=1.225, unit="kg/m3",
-    source="Standard value for dry air at sea level, 15 C, 101.325 kPa",
+    source="U.S. Standard Atmosphere (NOAA, NASA and USAF, 1976), sea level, 15 C",
     status=STANDARD,
     note="Not given in Betancourt et al. (2024), to whom the submitted "
          "chapter attributed it. Correction sheet item N4.",
 )
 
 AIR_VISCOSITY = Param(
-    symbol="mu_a", value=1.81e-5, unit="Pa.s",
-    source="Standard value for dry air at 25 C, 101.325 kPa",
+    symbol="mu_a", value=1.7894e-5, unit="Pa.s",
+    source="U.S. Standard Atmosphere (NOAA, NASA and USAF, 1976), sea level, 15 C",
     status=STANDARD,
     note="Required by the Reynolds number in the piecewise drag law. Absent "
          "from the submitted parameter table; must be added to Ch3 s3.6.",
@@ -84,31 +85,24 @@ REFUGE_THRESHOLD = Param(
     source="Study definition, Ch3 s3.3.1 and s3.6.2",
     status=ASSUMPTION,
     note="A cell is classified refuge when I(x,z)/I0 <= 0.10, i.e. at or "
-         "beyond 90 percent attenuation.",
+         "beyond 90 percent attenuation. With solid fruit, any threshold below "
+         "the leaves-only floor gives the same refuge map.",
 )
 
 HALF_LIFE_EXPOSED = Param(
-    symbol="T_half_exposed", value=24.0, unit="h",
-    source="Mwanza et al. (2022)",
-    note="Sunny exposed canopy surface. lambda = ln(2)/24 = 0.0289 /h.",
+    symbol="T_half_exposed", value=144.0, unit="h",
+    source="Moore (2002), cited in Moore et al. (2015)",
+    note="Sunny side of citrus trees: activity below half within 3-6 days. "
+         "Sunny-side estimates span about 1.4-6 days; the conservative rule "
+         "takes 6 days. lambda = ln(2)/144 = 0.00481 /h.",
 )
 
 HALF_LIFE_SHADED = Param(
-    symbol="T_half_shaded", value=72.0, unit="h",
-    source="Fritsch and Huber (1989), cited in Moore et al. (2015)",
-    note="Conservative shaded inner-canopy upper bound. "
-         "lambda = ln(2)/72 = 0.0096 /h. NOT attributable to Mwanza et al. "
-         "(2022) - this misattribution is error B1 in the correction log.",
-)
-
-LC50 = Param(
-    symbol="LC50", value=2.29e4, unit="OB/mL",
-    source="Mwanza et al. (2022)",
-)
-
-TEMPERATURE = Param(
-    symbol="T", value=25.0, unit="degC",
-    source="Model assumption, held constant", status=ASSUMPTION,
+    symbol="T_half_shaded", value=504.0, unit="h",
+    source="Moore (2002), cited in Moore et al. (2015)",
+    note="Shady side of citrus trees: still above half at 21 days. The "
+         "conservative rule takes the 21-day lower bound. "
+         "lambda = ln(2)/504 = 0.00138 /h.",
 )
 
 UAV_ALTITUDE = Param(
@@ -144,12 +138,14 @@ DOWNWASH_VELOCITY = Param(
 
 DOMAIN_WIDTH = Param(
     symbol="L_x", value=4.0, unit="m",
-    source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
+    source="Study definition, within the citrus canopy widths in Larbi et al. "
+           "(2026) and Yan et al. (2023)", status=ASSUMPTION,
 )
 
 DOMAIN_DEPTH = Param(
     symbol="L_z", value=3.0, unit="m",
-    source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
+    source="Study definition, within the citrus tree heights in Larbi et al. "
+           "(2026) and Han et al. (2026)", status=ASSUMPTION,
 )
 
 CELL_SIZE = Param(
@@ -160,8 +156,9 @@ CELL_SIZE = Param(
 TIME_STEP = Param(
     symbol="dt", value=0.01, unit="s",
     source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
-    note="Droplet drag relaxation time is approximately 3 s at r_p = 0.5 mm, "
-         "so forward Euler at 0.01 s is stable by two orders of magnitude.",
+    note="Drag relaxation time is about 0.03 s for the smallest droplets "
+         "(r_p = 52.5 um), so forward Euler at 0.01 s stays inside its "
+         "stability limit of twice the relaxation time.",
 )
 
 N_DROPLETS = Param(
@@ -170,38 +167,42 @@ N_DROPLETS = Param(
 )
 
 INTERCEPTION_EFFICIENCY = Param(
-    symbol="eta", value=1.0, unit="dimensionless",
-    source="Model assumption, decision D2", status=ASSUMPTION,
-    note="Spray capture per metre of path through foliage is LAD x eta.",
+    symbol="eta", value=0.575, unit="dimensionless",
+    source="Equal to k: the same leaf geometry as the light model "
+           "(Campbell and Norman, 1998)",
+    note="Spray capture per metre of path through foliage is k x LAD, using "
+         "the extinction coefficient of the run's own canopy.",
 )
 
 FRUIT_INTERCEPTION = Param(
-    symbol="k_fruit", value=12.0, unit="1/m",
-    source="Model assumption, decisions D2 and D3", status=ASSUMPTION,
-    note="Extra spray capture per metre of path inside a fruit cell.",
+    symbol="k_fruit", value=float("inf"), unit="1/m",
+    source="Physical: the fruit is solid", status=STANDARD,
+    note="Every droplet whose path enters a fruit cell is captured.",
 )
 
 FRUIT_RADIUS = Param(
     symbol="r_fruit", value=0.04, unit="m",
-    source="Model assumption, decision D3", status=ASSUMPTION,
+    source="NSW DPI (2020): Palmer navel, average diameter 83 mm",
 )
 
 FRUIT_OPTICAL_DEPTH = Param(
-    symbol="tau_fruit", value=3.0, unit="dimensionless",
-    source="Model assumption, decision D3", status=ASSUMPTION,
-    note="UV optical depth added to every cell below a fruit body.",
+    symbol="tau_fruit", value=float("inf"), unit="dimensionless",
+    source="Physical: the fruit is solid", status=STANDARD,
+    note="Fruit blocks all direct light; every cell below a fruit is fully shaded.",
 )
 
 FRUIT_SPACING = Param(
     symbol="s_fruit", value=0.55, unit="m",
-    source="Model assumption, decision D3", status=ASSUMPTION,
+    source="Model choice; fruit kept in the outer canopy after Whitney and "
+           "Wheaton (1984)", status=ASSUMPTION,
     note="Spacing within a row, starting 0.35 m from the edge; alternate "
          "rows are offset by half a spacing.",
 )
 
 DOWNWASH_DECAY_LENGTH = Param(
     symbol="L_dw", value=0.5, unit="m",
-    source="Model assumption, decision D4", status=ASSUMPTION,
+    source="Zhang et al. (2022): fade depths of 0.4-1.3 m measured inside "
+           "pear canopies",
     note="Downwash falls as exp(-z / L_dw) with depth below the canopy top.",
 )
 
@@ -212,7 +213,7 @@ CHECKPOINTS_H: Sequence[float] = (24.0, 48.0, 72.0)
 ALL_PARAMS = [
     DROPLET_RADIUS, SPRAY_DENSITY, AIR_DENSITY, AIR_VISCOSITY, GRAVITY,
     LAI_TOTAL, EXTINCTION_COEFF, REFUGE_THRESHOLD,
-    HALF_LIFE_EXPOSED, HALF_LIFE_SHADED, LC50, TEMPERATURE,
+    HALF_LIFE_EXPOSED, HALF_LIFE_SHADED,
     UAV_ALTITUDE, UAV_VELOCITY, DOWNWASH_VELOCITY,
     DOMAIN_WIDTH, DOMAIN_DEPTH, CELL_SIZE, TIME_STEP, N_DROPLETS,
     INTERCEPTION_EFFICIENCY, FRUIT_INTERCEPTION, FRUIT_RADIUS,
