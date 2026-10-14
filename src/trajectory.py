@@ -1,136 +1,149 @@
-"""Stage 2 - deposition mechanics.
+"""Stage 2: where the spray lands.
 
-Forward-Euler integration of the Betancourt et al. (2024) equation of motion
-with a Reynolds-dependent piecewise drag coefficient. Design decisions D2
-(fractional-mass interception) and D4 (downwash decay) are implemented here.
+Follows each droplet from the drone down through the canopy in small time
+steps (forward Euler), pulled by gravity and slowed by air drag, using the
+Betancourt et al. (2024) equation of motion and a drag coefficient that
+changes with the Reynolds number. In every cell the droplet passes through,
+the leaves and fruit catch part of the spray it still carries. Design
+decisions D2 (catching a share of the spray in each cell) and D4 (downwash
+fading with depth) are implemented here.
 """
 
 import numpy as np
-import params as P
+
+import params
 from grid import Canopy
 
+ACROSS = 0
+DEPTH = 1
+NEGLIGIBLE_SPRAY_LEFT = 1e-6
+LONGEST_FLIGHT_S = 60.0
 
-MASS_FLOOR = 1e-6
 
-
-def drag_coefficient(re: float) -> float:
-    if re < 1e-9:
+def drag_coefficient_for(reynolds_number: float) -> float:
+    if reynolds_number < 1e-9:
         return 0.0
-    if re <= 1.0:
-        return 24.0 / re
-    if re <= 400.0:
-        return 24.0 / re ** 0.646
-    if re <= 3e5:
+    if reynolds_number <= 1.0:
+        return 24.0 / reynolds_number
+    if reynolds_number <= 400.0:
+        return 24.0 / reynolds_number ** 0.646
+    if reynolds_number <= 3e5:
         return 0.5
     return 0.18
 
 
-def air_velocity(z: float, v_dw: float) -> np.ndarray:
-    """Downwash field. Full strength above the canopy, decaying with depth."""
-    if z <= 0.0:
-        return np.array([0.0, v_dw])
-    return np.array([0.0, v_dw * np.exp(-z / P.DOWNWASH_DECAY_LENGTH.value)])
+def air_velocity_at(depth: float, downwash_speed: float) -> np.ndarray:
+    """Downwash from the rotors: full strength above the canopy, fading with
+    depth inside it."""
+    if depth <= 0.0:
+        return np.array([0.0, downwash_speed])
+    return np.array([0.0, downwash_speed * np.exp(-depth / params.DOWNWASH_FADE_DEPTH.value)])
 
 
-def droplet_acceleration(vel: np.ndarray, v_air: np.ndarray,
-                         r_p: float) -> np.ndarray:
-    rho_p = P.SPRAY_DENSITY.value
-    rho_a = P.AIR_DENSITY.value
-    mu_a = P.AIR_VISCOSITY.value
-    g = P.GRAVITY.value
+def droplet_acceleration(droplet_velocity: np.ndarray, air_velocity: np.ndarray,
+                         droplet_radius: float) -> np.ndarray:
+    liquid_density = params.SPRAY_LIQUID_DENSITY.value
+    air_density = params.AIR_DENSITY.value
+    air_viscosity = params.AIR_VISCOSITY.value
+    gravity = params.GRAVITY.value
 
-    d = 2.0 * r_p
-    area = np.pi * r_p ** 2
-    mass = rho_p * (4.0 / 3.0) * np.pi * r_p ** 3
+    diameter = 2.0 * droplet_radius
+    cross_section_area = np.pi * droplet_radius ** 2
+    mass = liquid_density * (4.0 / 3.0) * np.pi * droplet_radius ** 3
 
-    rel = v_air - vel
-    speed = np.linalg.norm(rel)
-    re = rho_a * speed * d / mu_a
-    cd = drag_coefficient(re)
+    air_relative_to_droplet = air_velocity - droplet_velocity
+    relative_speed = np.linalg.norm(air_relative_to_droplet)
+    reynolds_number = air_density * relative_speed * diameter / air_viscosity
+    drag_coefficient = drag_coefficient_for(reynolds_number)
 
-    f_drag = 0.5 * rho_a * cd * area * speed * rel
-    return f_drag / mass + np.array([0.0, g])
+    drag_force = (0.5 * air_density * drag_coefficient * cross_section_area
+                  * relative_speed * air_relative_to_droplet)
+    return drag_force / mass + np.array([0.0, gravity])
 
 
-def integrate_one(x0: float, canopy: Canopy, altitude: float, v_uav: float,
-                  v_dw: float, r_p: float, dt: float = None):
-    """Track one droplet, depositing intercepted mass fraction cell by cell.
+def follow_one_droplet(release_position: float, canopy: Canopy, drone_height: float,
+                       drone_speed: float, downwash_speed: float, droplet_radius: float,
+                       time_step: float = None):
+    """Follow one droplet and record how much of its spray each cell catches.
 
-    The domain wraps horizontally. The cross-section represents a slice of a
+    The slice wraps around from side to side. It stands for a piece of a
     continuous orchard row, so a droplet carried past the right-hand edge by
-    the UAV forward velocity re-enters at the left rather than being lost.
-    Without this, the strip at the upwind edge that droplets drift across
-    before reaching the canopy receives no deposition at all.
+    the drone's forward speed comes back in at the left instead of being
+    lost. Without this, the strip at the upwind edge, which droplets drift
+    across before they reach the canopy, would receive no spray at all.
     """
-    dt = P.TIME_STEP.value if dt is None else dt
-    efficiency = canopy.k
-    fruit_capture = P.FRUIT_INTERCEPTION.value
+    time_step = params.TIME_STEP.value if time_step is None else time_step
+    spray_capture_per_leaf_area = canopy.light_extinction_coefficient
+    fruit_spray_capture = params.FRUIT_SPRAY_CAPTURE.value
+    canopy_width = canopy.width
+    canopy_depth = canopy.depth
 
-    pos = np.array([x0, -altitude])
-    vel = np.array([v_uav, v_dw])
-    remaining = 1.0
-    deposits = {}
+    position = np.array([release_position, -drone_height])
+    velocity = np.array([drone_speed, downwash_speed])
+    spray_left = 1.0
+    spray_caught_by_cell = {}
 
-    max_steps = int(60.0 / dt)
-    for _ in range(max_steps):
-        acc = droplet_acceleration(vel, air_velocity(pos[1], v_dw), r_p)
+    for _ in range(int(LONGEST_FLIGHT_S / time_step)):
+        acceleration = droplet_acceleration(
+            velocity, air_velocity_at(position[DEPTH], downwash_speed), droplet_radius)
 
-        vel = vel + acc * dt
-        new_pos = pos + vel * dt
-        step = new_pos - pos
-        ds = np.linalg.norm(step)
+        velocity = velocity + acceleration * time_step
+        next_position = position + velocity * time_step
+        step = next_position - position
+        step_length = np.linalg.norm(step)
 
-        if new_pos[1] > 0.0 and remaining > MASS_FLOOR and ds > 0.0:
-            sub = max(1, int(np.ceil(ds / (0.5 * canopy.dx))))
-            seg = ds / sub
-            for s_i in range(sub):
-                point = pos + step * ((s_i + 0.5) / sub)
-                z = point[1]
-                if z <= 0.0:
+        if next_position[DEPTH] > 0.0 and spray_left > NEGLIGIBLE_SPRAY_LEFT and step_length > 0.0:
+            pieces = max(1, int(np.ceil(step_length / (0.5 * canopy.cell_size))))
+            piece_length = step_length / pieces
+            for piece in range(pieces):
+                point = position + step * ((piece + 0.5) / pieces)
+                depth = point[DEPTH]
+                if depth <= 0.0:
                     continue
-                if z >= canopy.z_edges[-1]:
+                if depth >= canopy_depth:
                     break
-                x = point[0] % canopy.x_edges[-1]
-                i, j = canopy.cell_of(x, z)
-                optical = canopy.lad[i, j] * efficiency
-                if canopy.fruit_mask[i, j]:
-                    optical += fruit_capture
-                captured = remaining * (1.0 - np.exp(-optical * seg))
-                deposits[(i, j)] = deposits.get((i, j), 0.0) + captured
-                remaining -= captured
-                if remaining <= MASS_FLOOR:
+                across = point[ACROSS] % canopy_width
+                column, row = canopy.cell_containing(across, depth)
+                capture_rate = canopy.leaf_area_density[column, row] * spray_capture_per_leaf_area
+                if canopy.contains_fruit[column, row]:
+                    capture_rate += fruit_spray_capture
+                spray_caught = spray_left * (1.0 - np.exp(-capture_rate * piece_length))
+                spray_caught_by_cell[(column, row)] = spray_caught_by_cell.get((column, row), 0.0) + spray_caught
+                spray_left -= spray_caught
+                if spray_left <= NEGLIGIBLE_SPRAY_LEFT:
                     break
 
-        pos = new_pos
+        position = next_position
 
-        if remaining <= MASS_FLOOR:
+        if spray_left <= NEGLIGIBLE_SPRAY_LEFT:
             break
-        if pos[1] >= canopy.z_edges[-1]:
+        if position[DEPTH] >= canopy_depth:
             break
 
-    return deposits, remaining
+    return spray_caught_by_cell, spray_left
 
 
-def run(canopy: Canopy, altitude: float = None, v_uav: float = None,
-        v_dw: float = None, r_p: float = None, n: int = None,
-        dt: float = None):
-    """Release n droplets uniformly across the domain width."""
-    altitude = P.UAV_ALTITUDE.value if altitude is None else altitude
-    v_uav = P.UAV_VELOCITY.value if v_uav is None else v_uav
-    v_dw = P.DOWNWASH_VELOCITY.value if v_dw is None else v_dw
-    r_p = P.DROPLET_RADIUS.value if r_p is None else r_p
-    n = int(P.N_DROPLETS.value) if n is None else int(n)
+def spray_canopy(canopy: Canopy, drone_height: float = None, drone_speed: float = None,
+                 downwash_speed: float = None, droplet_radius: float = None,
+                 droplets_released: int = None, time_step: float = None):
+    """Release droplets evenly across the slice and add up where their spray lands."""
+    drone_height = params.DRONE_HEIGHT_ABOVE_CANOPY.value if drone_height is None else drone_height
+    drone_speed = params.DRONE_SPEED.value if drone_speed is None else drone_speed
+    downwash_speed = params.DOWNWASH_SPEED.value if downwash_speed is None else downwash_speed
+    droplet_radius = params.DROPLET_RADIUS.value if droplet_radius is None else droplet_radius
+    droplets_released = (int(params.DROPLETS_PER_RUN.value) if droplets_released is None
+                         else int(droplets_released))
 
-    deposition = np.zeros((canopy.nx, canopy.nz))
-    escaped = 0.0
-    width = canopy.x_edges[-1]
-    starts = np.linspace(0.0, width, n, endpoint=False)
+    spray_landed = np.zeros((canopy.cells_across, canopy.cells_deep))
+    spray_passing_through = 0.0
+    release_positions = np.linspace(0.0, canopy.width, droplets_released, endpoint=False)
 
-    for x0 in starts:
-        deposits, remaining = integrate_one(
-            x0, canopy, altitude, v_uav, v_dw, r_p, dt)
-        for (i, j), amount in deposits.items():
-            deposition[i, j] += amount
-        escaped += remaining
+    for release_position in release_positions:
+        spray_caught_by_cell, spray_left = follow_one_droplet(
+            release_position, canopy, drone_height, drone_speed, downwash_speed,
+            droplet_radius, time_step)
+        for (column, row), amount in spray_caught_by_cell.items():
+            spray_landed[column, row] += amount
+        spray_passing_through += spray_left
 
-    return deposition, escaped / n
+    return spray_landed, spray_passing_through / droplets_released

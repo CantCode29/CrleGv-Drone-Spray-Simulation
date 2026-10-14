@@ -1,11 +1,11 @@
-"""Single source of truth for every model input.
+"""Every model input in one place, with its source.
 
-Every value carries its citation as data, not as a comment, so that the
-parameter table in the dissertation appendix can be generated directly from
-this module and can never drift from what the code actually ran.
+Each input carries its citation as data rather than as a comment, so the
+input table in the dissertation appendix can be generated straight from this
+file and always matches what the model actually ran with.
 """
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Optional, Sequence
 
 
@@ -16,7 +16,7 @@ STANDARD = "standard"
 
 
 @dataclass(frozen=True)
-class Param:
+class ModelInput:
     symbol: str
     value: float
     unit: str
@@ -26,12 +26,12 @@ class Param:
     high: Optional[float] = None
     note: str = ""
 
-    def bounds(self):
+    def low_and_high(self):
         return (self.low if self.low is not None else self.value,
                 self.high if self.high is not None else self.value)
 
 
-DROPLET_RADIUS = Param(
+DROPLET_RADIUS = ModelInput(
     symbol="r_p", value=70.0e-6, unit="m",
     source="Yan et al. (2023); Grant et al. (2022); Chen et al. (2020)",
     low=52.5e-6, high=263.5e-6,
@@ -40,12 +40,12 @@ DROPLET_RADIUS = Param(
          "searching. Radius is half the diameter.",
 )
 
-SPRAY_DENSITY = Param(
+SPRAY_LIQUID_DENSITY = ModelInput(
     symbol="rho_p", value=1000.0, unit="kg/m3",
     source="Betancourt et al. (2024)",
 )
 
-AIR_DENSITY = Param(
+AIR_DENSITY = ModelInput(
     symbol="rho_a", value=1.225, unit="kg/m3",
     source="U.S. Standard Atmosphere (NOAA, NASA and USAF, 1976), sea level, 15 C",
     status=STANDARD,
@@ -53,7 +53,7 @@ AIR_DENSITY = Param(
          "chapter attributed it. Correction sheet item N4.",
 )
 
-AIR_VISCOSITY = Param(
+AIR_VISCOSITY = ModelInput(
     symbol="mu_a", value=1.7894e-5, unit="Pa.s",
     source="U.S. Standard Atmosphere (NOAA, NASA and USAF, 1976), sea level, 15 C",
     status=STANDARD,
@@ -61,26 +61,26 @@ AIR_VISCOSITY = Param(
          "from the submitted parameter table; must be added to Ch3 s3.6.",
 )
 
-GRAVITY = Param(
+GRAVITY = ModelInput(
     symbol="g", value=9.81, unit="m/s2",
     source="Standard value", status=STANDARD,
 )
 
-LAI_TOTAL = Param(
+LEAF_AREA_INDEX = ModelInput(
     symbol="LAI", value=2.8, unit="m2/m2",
     source="Almenares-Garlobo et al. (2015)",
     low=2.0, high=3.6,
     note="Central value is the midpoint of the reported citrus range.",
 )
 
-EXTINCTION_COEFF = Param(
+LIGHT_EXTINCTION_COEFFICIENT = ModelInput(
     symbol="k", value=0.575, unit="dimensionless",
     source="Zhang et al. (2014)",
     low=0.55, high=0.60,
     note="Broadleaf forest analogy adopted for citrus.",
 )
 
-REFUGE_THRESHOLD = Param(
+DEEP_SHADE_LIGHT_LIMIT = ModelInput(
     symbol="tau", value=0.10, unit="dimensionless",
     source="Study definition, Ch3 s3.3.1 and s3.6.2",
     status=ASSUMPTION,
@@ -89,7 +89,7 @@ REFUGE_THRESHOLD = Param(
          "the leaves-only floor gives the same refuge map.",
 )
 
-HALF_LIFE_EXPOSED = Param(
+VIRUS_HALF_LIFE_IN_FULL_SUN = ModelInput(
     symbol="T_half_exposed", value=144.0, unit="h",
     source="Moore (2002), cited in Moore et al. (2015)",
     note="Sunny side of citrus trees: activity below half within 3-6 days. "
@@ -97,7 +97,7 @@ HALF_LIFE_EXPOSED = Param(
          "takes 6 days. lambda = ln(2)/144 = 0.00481 /h.",
 )
 
-HALF_LIFE_SHADED = Param(
+VIRUS_HALF_LIFE_IN_FULL_SHADE = ModelInput(
     symbol="T_half_shaded", value=504.0, unit="h",
     source="Moore (2002), cited in Moore et al. (2015)",
     note="Shady side of citrus trees: still above half at 21 days. The "
@@ -105,7 +105,7 @@ HALF_LIFE_SHADED = Param(
          "lambda = ln(2)/504 = 0.00138 /h.",
 )
 
-UAV_ALTITUDE = Param(
+DRONE_HEIGHT_ABOVE_CANOPY = ModelInput(
     symbol="h_uav", value=1.25, unit="m",
     source="Han et al. (2026); Meng et al. (2022); Chen et al. (2025); "
            "Martinez-Guanter et al. (2020)",
@@ -115,7 +115,7 @@ UAV_ALTITUDE = Param(
          "the vault note Drone Settings Sources (D6).",
 )
 
-UAV_VELOCITY = Param(
+DRONE_SPEED = ModelInput(
     symbol="v_uav", value=3.0, unit="m/s",
     source="Han et al. (2026); Meng et al. (2022); Yan et al. (2023); "
            "Chen et al. (2025); Martinez-Guanter et al. (2020)",
@@ -124,7 +124,7 @@ UAV_VELOCITY = Param(
          "studies; see the vault note Drone Settings Sources (D6).",
 )
 
-DOWNWASH_VELOCITY = Param(
+DOWNWASH_SPEED = ModelInput(
     symbol="v_dw", value=8.5, unit="m/s",
     source="Yallappa et al. (2024), Figure 12",
     low=6.5, high=10.0,
@@ -136,24 +136,24 @@ DOWNWASH_VELOCITY = Param(
          "Drone Settings Sources (D6).",
 )
 
-DOMAIN_WIDTH = Param(
+SLICE_WIDTH = ModelInput(
     symbol="L_x", value=4.0, unit="m",
     source="Study definition, within the citrus canopy widths in Larbi et al. "
            "(2026) and Yan et al. (2023)", status=ASSUMPTION,
 )
 
-DOMAIN_DEPTH = Param(
+SLICE_DEPTH = ModelInput(
     symbol="L_z", value=3.0, unit="m",
     source="Study definition, within the citrus tree heights in Larbi et al. "
            "(2026) and Han et al. (2026)", status=ASSUMPTION,
 )
 
-CELL_SIZE = Param(
+CELL_SIZE = ModelInput(
     symbol="dx", value=0.05, unit="m",
     source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
 )
 
-TIME_STEP = Param(
+TIME_STEP = ModelInput(
     symbol="dt", value=0.01, unit="s",
     source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
     note="Drag relaxation time is about 0.03 s for the smallest droplets "
@@ -161,12 +161,12 @@ TIME_STEP = Param(
          "stability limit of twice the relaxation time.",
 )
 
-N_DROPLETS = Param(
+DROPLETS_PER_RUN = ModelInput(
     symbol="N", value=10000, unit="droplets/run",
     source="Study definition, Ch3 s3.7.3", status=ASSUMPTION,
 )
 
-INTERCEPTION_EFFICIENCY = Param(
+LEAF_SPRAY_CAPTURE = ModelInput(
     symbol="eta", value=0.575, unit="dimensionless",
     source="Equal to k: the same leaf geometry as the light model "
            "(Campbell and Norman, 1998)",
@@ -174,24 +174,24 @@ INTERCEPTION_EFFICIENCY = Param(
          "the extinction coefficient of the run's own canopy.",
 )
 
-FRUIT_INTERCEPTION = Param(
+FRUIT_SPRAY_CAPTURE = ModelInput(
     symbol="k_fruit", value=float("inf"), unit="1/m",
     source="Physical: the fruit is solid", status=STANDARD,
     note="Every droplet whose path enters a fruit cell is captured.",
 )
 
-FRUIT_RADIUS = Param(
+FRUIT_RADIUS = ModelInput(
     symbol="r_fruit", value=0.04, unit="m",
     source="NSW DPI (2020): Palmer navel, average diameter 83 mm",
 )
 
-FRUIT_OPTICAL_DEPTH = Param(
+FRUIT_LIGHT_BLOCKING = ModelInput(
     symbol="tau_fruit", value=float("inf"), unit="dimensionless",
     source="Physical: the fruit is solid", status=STANDARD,
     note="Fruit blocks all direct light; every cell below a fruit is fully shaded.",
 )
 
-FRUIT_SPACING = Param(
+FRUIT_SPACING = ModelInput(
     symbol="s_fruit", value=0.55, unit="m",
     source="Model choice; fruit kept in the outer canopy after Whitney and "
            "Wheaton (1984)", status=ASSUMPTION,
@@ -199,37 +199,42 @@ FRUIT_SPACING = Param(
          "rows are offset by half a spacing.",
 )
 
-DOWNWASH_DECAY_LENGTH = Param(
+DOWNWASH_FADE_DEPTH = ModelInput(
     symbol="L_dw", value=0.5, unit="m",
     source="Zhang et al. (2022): fade depths of 0.4-1.3 m measured inside "
            "pear canopies",
     note="Downwash falls as exp(-z / L_dw) with depth below the canopy top.",
 )
 
-FRUIT_FIRST_X_M = 0.35
+FIRST_FRUIT_FROM_LEFT_EDGE_M = 0.35
 FRUIT_ROW_DEPTHS_M: Sequence[float] = (0.45, 0.95, 1.45)
-CHECKPOINTS_H: Sequence[float] = (24.0, 48.0, 72.0)
+CHECKPOINT_HOURS: Sequence[float] = (24.0, 48.0, 72.0)
 
-ALL_PARAMS = [
-    DROPLET_RADIUS, SPRAY_DENSITY, AIR_DENSITY, AIR_VISCOSITY, GRAVITY,
-    LAI_TOTAL, EXTINCTION_COEFF, REFUGE_THRESHOLD,
-    HALF_LIFE_EXPOSED, HALF_LIFE_SHADED,
-    UAV_ALTITUDE, UAV_VELOCITY, DOWNWASH_VELOCITY,
-    DOMAIN_WIDTH, DOMAIN_DEPTH, CELL_SIZE, TIME_STEP, N_DROPLETS,
-    INTERCEPTION_EFFICIENCY, FRUIT_INTERCEPTION, FRUIT_RADIUS,
-    FRUIT_OPTICAL_DEPTH, FRUIT_SPACING, DOWNWASH_DECAY_LENGTH,
+ALL_INPUTS = [
+    DROPLET_RADIUS, SPRAY_LIQUID_DENSITY, AIR_DENSITY, AIR_VISCOSITY, GRAVITY,
+    LEAF_AREA_INDEX, LIGHT_EXTINCTION_COEFFICIENT, DEEP_SHADE_LIGHT_LIMIT,
+    VIRUS_HALF_LIFE_IN_FULL_SUN, VIRUS_HALF_LIFE_IN_FULL_SHADE,
+    DRONE_HEIGHT_ABOVE_CANOPY, DRONE_SPEED, DOWNWASH_SPEED,
+    SLICE_WIDTH, SLICE_DEPTH, CELL_SIZE, TIME_STEP, DROPLETS_PER_RUN,
+    LEAF_SPRAY_CAPTURE, FRUIT_SPRAY_CAPTURE, FRUIT_RADIUS,
+    FRUIT_LIGHT_BLOCKING, FRUIT_SPACING, DOWNWASH_FADE_DEPTH,
 ]
 
-SWEEP_PARAMS = [UAV_ALTITUDE, UAV_VELOCITY, DOWNWASH_VELOCITY, DROPLET_RADIUS]
+SETTINGS_TESTED = {
+    "drone_height": DRONE_HEIGHT_ABOVE_CANOPY,
+    "drone_speed": DRONE_SPEED,
+    "downwash_speed": DOWNWASH_SPEED,
+    "droplet_radius": DROPLET_RADIUS,
+}
 
 
-def unsourced():
-    return [p for p in ALL_PARAMS if p.status == UNSOURCED]
+def inputs_without_a_source():
+    return [model_input for model_input in ALL_INPUTS if model_input.status == UNSOURCED]
 
 
 def as_table():
-    return [asdict(p) for p in ALL_PARAMS]
+    return [asdict(model_input) for model_input in ALL_INPUTS]
 
 
-def baseline():
-    return {p.symbol: p.value for p in ALL_PARAMS}
+def central_values():
+    return {model_input.symbol: model_input.value for model_input in ALL_INPUTS}

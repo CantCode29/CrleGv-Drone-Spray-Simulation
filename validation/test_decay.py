@@ -2,34 +2,34 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import numpy as np
+import params
 import survival
-import params as P
 
 
-def test_no_decay_at_time_zero():
-    ratios = np.linspace(0.0, 1.0, 11)
-    assert np.allclose(survival.viable_fraction(ratios, 0.0), 1.0)
+def test_all_virus_is_active_at_the_moment_of_spraying():
+    light_levels = np.linspace(0.0, 1.0, 11)
+    assert np.allclose(survival.share_still_active(light_levels, 0.0), 1.0)
 
 
-def test_exposed_half_life():
-    exposed = np.array([1.0])
-    v = survival.viable_fraction(exposed, P.HALF_LIFE_EXPOSED.value)
-    assert abs(v[0] - 0.5) < 1e-9
+def test_half_remains_after_the_full_sun_half_life():
+    full_sun = np.array([1.0])
+    remaining = survival.share_still_active(full_sun, params.VIRUS_HALF_LIFE_IN_FULL_SUN.value)
+    assert abs(remaining[0] - 0.5) < 1e-9
 
 
-def test_shaded_half_life():
-    shaded = np.array([0.0])
-    v = survival.viable_fraction(shaded, P.HALF_LIFE_SHADED.value)
-    assert abs(v[0] - 0.5) < 1e-9
+def test_half_remains_after_the_full_shade_half_life():
+    full_shade = np.array([0.0])
+    remaining = survival.share_still_active(full_shade, params.VIRUS_HALF_LIFE_IN_FULL_SHADE.value)
+    assert abs(remaining[0] - 0.5) < 1e-9
 
 
-def test_shade_always_preserves_more_than_sun():
-    for h in P.CHECKPOINTS_H:
-        assert survival.viable_fraction(np.array([0.0]), h)[0] > \
-               survival.viable_fraction(np.array([1.0]), h)[0]
+def test_shade_always_keeps_more_virus_active_than_sun():
+    for hours in params.CHECKPOINT_HOURS:
+        assert survival.share_still_active(np.array([0.0]), hours)[0] > \
+               survival.share_still_active(np.array([1.0]), hours)[0]
 
 
-def test_monotonic_in_intensity():
-    ratios = np.linspace(0.0, 1.0, 50)
-    v = survival.viable_fraction(ratios, 48.0)
-    assert np.all(np.diff(v) < 0)
+def test_more_light_always_leaves_less_virus_active():
+    light_levels = np.linspace(0.0, 1.0, 50)
+    remaining = survival.share_still_active(light_levels, 48.0)
+    assert np.all(np.diff(remaining) < 0)

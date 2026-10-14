@@ -2,30 +2,33 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import numpy as np
-import params as P
+import params
 import trajectory
 import validate
 
 
-def force_balance_speed(r_p):
-    rho_p, rho_a, mu_a, g = (P.SPRAY_DENSITY.value, P.AIR_DENSITY.value,
-                             P.AIR_VISCOSITY.value, P.GRAVITY.value)
-    mass = rho_p * (4 / 3) * np.pi * r_p ** 3
-    area = np.pi * r_p ** 2
-    lo, hi = 1e-6, 50.0
+def speed_where_drag_balances_weight(droplet_radius):
+    liquid_density, air_density, air_viscosity, gravity = (
+        params.SPRAY_LIQUID_DENSITY.value, params.AIR_DENSITY.value,
+        params.AIR_VISCOSITY.value, params.GRAVITY.value)
+    mass = liquid_density * (4 / 3) * np.pi * droplet_radius ** 3
+    cross_section_area = np.pi * droplet_radius ** 2
+    too_slow, too_fast = 1e-6, 50.0
     for _ in range(200):
-        v = 0.5 * (lo + hi)
-        re = rho_a * v * 2 * r_p / mu_a
-        drag = 0.5 * rho_a * trajectory.drag_coefficient(re) * area * v * v
-        lo, hi = (v, hi) if drag < mass * g else (lo, v)
-    return 0.5 * (lo + hi)
+        speed = 0.5 * (too_slow + too_fast)
+        reynolds_number = air_density * speed * 2 * droplet_radius / air_viscosity
+        drag = (0.5 * air_density * trajectory.drag_coefficient_for(reynolds_number)
+                * cross_section_area * speed * speed)
+        too_slow, too_fast = (speed, too_fast) if drag < mass * gravity else (too_slow, speed)
+    return 0.5 * (too_slow + too_fast)
 
 
 def test_integrated_fall_speed_reaches_the_force_balance():
-    for r_p in validate.GUNN_KINZER_1949:
-        assert abs(validate.fall_speed(r_p) / force_balance_speed(r_p) - 1.0) < 1e-4
+    for droplet_radius in validate.GUNN_KINZER_1949_FALL_SPEEDS:
+        simulated = validate.steady_fall_speed(droplet_radius)
+        assert abs(simulated / speed_where_drag_balances_weight(droplet_radius) - 1.0) < 1e-4
 
 
 def test_fall_speed_rises_with_droplet_size():
-    speeds = [validate.fall_speed(r) for r in sorted(validate.GUNN_KINZER_1949)]
+    speeds = [validate.steady_fall_speed(radius) for radius in sorted(validate.GUNN_KINZER_1949_FALL_SPEEDS)]
     assert speeds == sorted(speeds)

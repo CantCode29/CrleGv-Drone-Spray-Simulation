@@ -1,49 +1,54 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-import itertools
 import pytest
-import params as P
+import params
 import sweep
 
 
-def synthetic(f):
-    return [{"inputs": kw, "outputs": {sweep.METRIC: f(kw)}} for kw in sweep.design()]
+def made_up_runs(result_for):
+    return [{"inputs": settings, "outputs": {sweep.RANKING_MEASURE: result_for(settings)}}
+            for settings in sweep.all_combinations()]
 
 
 def test_design_is_the_full_three_level_factorial():
-    runs = sweep.design()
-    assert len(runs) == 81
-    assert len({tuple(sorted(r.items())) for r in runs}) == 81
-    for key in sweep.KEYS.values():
-        values = [r[key] for r in runs]
+    combinations = sweep.all_combinations()
+    assert len(combinations) == 81
+    assert len({tuple(sorted(settings.items())) for settings in combinations}) == 81
+    for name in params.SETTINGS_TESTED:
+        values = [settings[name] for settings in combinations]
         assert len(set(values)) == 3
-        assert all(values.count(v) == 27 for v in set(values))
+        assert all(values.count(value) == 27 for value in set(values))
 
 
 def test_additive_response_has_no_interactions():
-    fx = sweep.effects(synthetic(lambda k: 2 * k["altitude"] + 5 * k["v_uav"] + 1e3 * k["r_p"]))
-    assert all(v < 1e-12 for v in fx["interactions"].values())
-    assert sum(m["share"] for m in fx["main"].values()) == pytest.approx(1.0)
-    assert fx["main"]["v_dw"]["share"] == pytest.approx(0.0, abs=1e-12)
+    effects = sweep.setting_effects(made_up_runs(
+        lambda settings: 2 * settings["drone_height"] + 5 * settings["drone_speed"]
+        + 1e3 * settings["droplet_radius"]))
+    assert all(share < 1e-12 for share in effects["interactions"].values())
+    assert sum(effect["share_of_variation"] for effect in effects["main_effects"].values()) == pytest.approx(1.0)
+    assert effects["main_effects"]["downwash_speed"]["share_of_variation"] == pytest.approx(0.0, abs=1e-12)
 
 
 def test_product_response_shows_up_as_that_interaction():
-    fx = sweep.effects(synthetic(lambda k: k["altitude"] * k["v_dw"]))
-    assert fx["interactions"]["h_uav x v_dw"] > 0.0
-    others = {pair: s for pair, s in fx["interactions"].items() if pair != "h_uav x v_dw"}
-    assert all(s < 1e-12 for s in others.values())
+    effects = sweep.setting_effects(made_up_runs(
+        lambda settings: settings["drone_height"] * settings["downwash_speed"]))
+    assert effects["interactions"]["drone_height x downwash_speed"] > 0.0
+    others = {pair: share for pair, share in effects["interactions"].items()
+              if pair != "drone_height x downwash_speed"}
+    assert all(share < 1e-12 for share in others.values())
 
 
 def test_sensitivity_of_a_proportional_response_is_one():
-    fx = sweep.effects(synthetic(lambda k: k["altitude"]))
-    assert fx["main"]["h_uav"]["sensitivity"] == pytest.approx(1.0)
-    assert fx["main"]["v_uav"]["sensitivity"] == pytest.approx(0.0, abs=1e-12)
+    effects = sweep.setting_effects(made_up_runs(lambda settings: settings["drone_height"]))
+    assert effects["main_effects"]["drone_height"]["sensitivity"] == pytest.approx(1.0)
+    assert effects["main_effects"]["drone_speed"]["sensitivity"] == pytest.approx(0.0, abs=1e-12)
 
 
-def test_best_run_maximises_the_metric():
-    central = P.UAV_ALTITUDE.value
-    records = synthetic(lambda k: -abs(k["altitude"] - central) - k["v_dw"])
-    top = sweep.best(records)
-    assert top["inputs"]["altitude"] == central
-    assert top["inputs"]["v_dw"] == min(r["inputs"]["v_dw"] for r in records)
+def test_best_run_has_the_highest_ranking_measure():
+    central_height = params.DRONE_HEIGHT_ABOVE_CANOPY.value
+    records = made_up_runs(
+        lambda settings: -abs(settings["drone_height"] - central_height) - settings["downwash_speed"])
+    top = sweep.best_run(records)
+    assert top["inputs"]["drone_height"] == central_height
+    assert top["inputs"]["downwash_speed"] == min(record["inputs"]["downwash_speed"] for record in records)

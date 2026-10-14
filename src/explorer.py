@@ -1,10 +1,12 @@
 """Data block for the interactive explorer page, built from saved runs.
 
 The page at explorer/index.html reruns a JavaScript copy of the model in the
-browser. This module writes everything the page cannot compute live into its
-JSON data block: the parameter values, the 81 saved study runs and their
-effect analysis, the validation verdicts, and the central-run figures the page
-uses to check that its copy of the model matches the Python model.
+browser. This module writes everything the page cannot work out live into its
+JSON data block: the input values, the 81 saved study runs and their effect
+analysis, the validation verdicts, and the central-run figures the page uses
+to check that its copy of the model matches the Python model. The page reads
+the model's short symbols and its own zone names, so the names used in the
+Python model are translated into those here.
 """
 
 import json
@@ -15,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 import grid
-import params as P
+import params
 import sweep
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,105 +27,116 @@ PAGE = ROOT / "explorer" / "index.html"
 OPEN_TAG = '<script id="crlegv-data" type="application/json">'
 CLOSE_TAG = "</script>"
 MODEL_FILES = ("src/params.py", "src/grid.py", "src/trajectory.py", "src/survival.py")
-ZONES = ("outer", "mid", "inner", "microhabitat")
+PAGE_ZONE_NAMES = {"outer": "outer", "middle": "mid", "inner": "inner",
+                   "shaded_next_to_fruit": "microhabitat"}
+PAGE_SYMBOLS = {name: setting.symbol for name, setting in params.SETTINGS_TESTED.items()}
 CHECK_HOURS = ("24.0", "72.0")
 
 
-def _mm(metres):
+def _millimetres(metres):
     return round(metres * 1e3, 6)
 
 
-def _records(runs_dir):
-    records = [json.loads(p.read_text()) for p in sorted(Path(runs_dir).glob("fact_*/record.json"))]
-    expected = len(sweep.design())
+def _saved_runs(runs_dir):
+    records = [json.loads(path.read_text()) for path in sorted(Path(runs_dir).glob("fact_*/record.json"))]
+    expected = len(sweep.all_combinations())
     if len(records) != expected:
         raise FileNotFoundError(f"Found {len(records)} of {expected} factorial runs - run src/sweep.py first.")
     return records
 
 
-def _central_dir(runs_dir):
-    central = {"altitude": P.UAV_ALTITUDE.value, "v_uav": P.UAV_VELOCITY.value,
-               "v_dw": P.DOWNWASH_VELOCITY.value, "r_p": P.DROPLET_RADIUS.value}
-    for record in sorted(Path(runs_dir).glob("fact_*/record.json")):
-        inputs = json.loads(record.read_text())["inputs"]
-        if all(abs(inputs[k] - v) < 1e-12 for k, v in central.items()):
-            return record.parent
+def _central_run_folder(runs_dir):
+    central_settings = {name: setting.value for name, setting in params.SETTINGS_TESTED.items()}
+    for record_path in sorted(Path(runs_dir).glob("fact_*/record.json")):
+        inputs = json.loads(record_path.read_text())["inputs"]
+        if all(abs(inputs[name] - value) < 1e-12 for name, value in central_settings.items()):
+            return record_path.parent
     raise FileNotFoundError("No factorial run at the central settings - run src/sweep.py first.")
 
 
 def parameters():
-    out = P.baseline()
-    out["FRUIT_FIRST_X_M"] = P.FRUIT_FIRST_X_M
-    out["FRUIT_ROW_DEPTHS_M"] = list(P.FRUIT_ROW_DEPTHS_M)
-    return out
+    values = params.central_values()
+    values["FRUIT_FIRST_X_M"] = params.FIRST_FRUIT_FROM_LEFT_EDGE_M
+    values["FRUIT_ROW_DEPTHS_M"] = list(params.FRUIT_ROW_DEPTHS_M)
+    return values
 
 
 def levels():
-    out = {p.symbol: sweep.levels(p) for p in P.SWEEP_PARAMS}
-    out["r_p_mm"] = [_mm(v) for v in out["r_p"]]
-    return out
+    values = {setting.symbol: sweep.three_levels(setting) for setting in params.SETTINGS_TESTED.values()}
+    values["r_p_mm"] = [_millimetres(radius) for radius in values["r_p"]]
+    return values
 
 
 def ranges():
-    return {p.symbol: [p.bounds()[0], p.value, p.bounds()[1]]
-            for p in (P.LAI_TOTAL, P.EXTINCTION_COEFF)}
+    return {setting.symbol: [setting.low_and_high()[0], setting.value, setting.low_and_high()[1]]
+            for setting in (params.LEAF_AREA_INDEX, params.LIGHT_EXTINCTION_COEFFICIENT)}
 
 
 def runs(records):
     rows = []
     for record in records:
         inputs, outputs = record["inputs"], record["outputs"]
-        zones = outputs["zone_deposition"]
-        rows.append([inputs["altitude"], inputs["v_uav"], inputs["v_dw"], _mm(inputs["r_p"]),
-                     zones["outer"]["deposit_per_m2"], zones["mid"]["deposit_per_m2"],
-                     zones["inner"]["deposit_per_m2"], outputs["escaped_fraction"]])
+        spray_by_zone = outputs["spray_by_zone"]
+        rows.append([inputs["drone_height"], inputs["drone_speed"], inputs["downwash_speed"],
+                     _millimetres(inputs["droplet_radius"]),
+                     spray_by_zone["outer"]["spray_per_m2"], spray_by_zone["middle"]["spray_per_m2"],
+                     spray_by_zone["inner"]["spray_per_m2"], outputs["share_passing_through_canopy"]])
     return rows
+
+
+def _page_pair_name(pair):
+    first, second = pair.split(" x ")
+    return f"{PAGE_SYMBOLS[first]} x {PAGE_SYMBOLS[second]}"
 
 
 def effects(summary):
     found = summary["effects"]
     return {
-        "grand": found["grand_mean"],
+        "grand": found["overall_mean"],
         "higher": found["higher_order_share"],
-        "main": {key: {"levels": m["levels"], "means": m["level_means"],
-                       "share": m["share"], "S": m["sensitivity"]}
-                 for key, m in found["main"].items()},
-        "inter": found["interactions"],
+        "main": {PAGE_SYMBOLS[name]: {"levels": effect["levels"], "means": effect["level_means"],
+                                      "share": effect["share_of_variation"], "S": effect["sensitivity"]}
+                 for name, effect in found["main_effects"].items()},
+        "inter": {_page_pair_name(pair): share for pair, share in found["interactions"].items()},
     }
 
 
 def check(runs_dir):
-    folder = _central_dir(runs_dir)
+    folder = _central_run_folder(runs_dir)
     record = json.loads((folder / "record.json").read_text())
     arrays = np.load(folder / "arrays.npz")
-    canopy = grid.build()
-    masks = grid.zones(canopy)
+    canopy = grid.build_canopy()
+    zones = grid.canopy_zones(canopy)
     outputs = record["outputs"]
     return {
-        "deposit_sum": float(arrays["deposition"].sum()),
-        "inner_per_m2": outputs["zone_deposition"]["inner"]["deposit_per_m2"],
-        "outer_per_m2": outputs["zone_deposition"]["outer"]["deposit_per_m2"],
-        "escaped": outputs["escaped_fraction"],
-        "refuge_cells": int(arrays["refuge"].sum()),
-        "micro_cells": int(masks["microhabitat"].sum()),
-        "fruit_cells": int(canopy.fruit_mask.sum()),
-        "uv_sum": float(arrays["intensity_ratio"].sum()),
-        "viable": {h: {z: outputs["zone_summaries"][h][z]["mean_viable_fraction"] for z in ZONES}
-                   for h in CHECK_HOURS},
+        "deposit_sum": float(arrays["spray_landed"].sum()),
+        "inner_per_m2": outputs["spray_by_zone"]["inner"]["spray_per_m2"],
+        "outer_per_m2": outputs["spray_by_zone"]["outer"]["spray_per_m2"],
+        "escaped": outputs["share_passing_through_canopy"],
+        "refuge_cells": int(arrays["deep_shade"].sum()),
+        "micro_cells": int(zones["shaded_next_to_fruit"].sum()),
+        "fruit_cells": int(canopy.contains_fruit.sum()),
+        "uv_sum": float(arrays["share_of_full_light"].sum()),
+        "viable": {hours: {page_zone: outputs["virus_by_zone"][hours][zone_name]["average_share_still_active"]
+                           for zone_name, page_zone in PAGE_ZONE_NAMES.items()}
+                   for hours in CHECK_HOURS},
     }
 
 
 def validation(source):
-    t1, t2, t3, t4 = (json.loads((Path(source) / f"target{i}.json").read_text()) for i in range(1, 5))
+    fall_speed_target, deposit_target, outer_survival_target, survival_ratio_target = (
+        json.loads((Path(source) / f"target{number}.json").read_text()) for number in range(1, 5))
     return {
-        "t1": {"tolerance": t1["tolerance"],
-               "rows": [{"d": r["diameter_mm"], "measured": r["measured_m_s"],
-                         "simulated": r["simulated_m_s"], "dev": r["deviation"],
-                         "ok": r["within_tolerance"]} for r in t1["rows"]]},
-        "t2": {"field": [min(t2["benchmark_ratios"]), max(t2["benchmark_ratios"])],
-               "ratio": t2["ratio"], "band": t2["band"], "ok": t2["passed"]},
-        "t3": {"value": t3["outer_24h"], "band": t3["band"], "ok": t3["passed"]},
-        "t4": {"ratio": t4["ratio_21d"], "band": t4["band_21d"], "ok": t4["passed"]},
+        "t1": {"tolerance": fall_speed_target["tolerance"],
+               "rows": [{"d": row["diameter_mm"], "measured": row["measured_m_s"],
+                         "simulated": row["simulated_m_s"], "dev": row["deviation"],
+                         "ok": row["within_tolerance"]} for row in fall_speed_target["rows"]]},
+        "t2": {"field": [min(deposit_target["benchmark_ratios"]), max(deposit_target["benchmark_ratios"])],
+               "ratio": deposit_target["ratio"], "band": deposit_target["band"], "ok": deposit_target["passed"]},
+        "t3": {"value": outer_survival_target["outer_24h"], "band": outer_survival_target["band"],
+               "ok": outer_survival_target["passed"]},
+        "t4": {"ratio": survival_ratio_target["ratio_21d"], "band": survival_ratio_target["band_21d"],
+               "ok": survival_ratio_target["passed"]},
     }
 
 
@@ -142,14 +155,14 @@ def study_date(runs_dir):
     return f"{finished.day} {finished:%b %Y}"
 
 
-def build(runs_dir=RUNS_DIR, validation_dir=VALIDATION_DIR):
+def page_data(runs_dir=RUNS_DIR, validation_dir=VALIDATION_DIR):
     runs_dir = Path(runs_dir)
     summary = json.loads((runs_dir / "factorial_summary.json").read_text())
     return {
         "params": parameters(),
         "levels": levels(),
         "ranges": ranges(),
-        "runs": runs(_records(runs_dir)),
+        "runs": runs(_saved_runs(runs_dir)),
         "effects": effects(summary),
         "check": check(runs_dir),
         "validation": validation(validation_dir),
@@ -158,24 +171,24 @@ def build(runs_dir=RUNS_DIR, validation_dir=VALIDATION_DIR):
     }
 
 
-def inject(page_text, data):
+def put_data_into_page(page_text, data):
     start = page_text.index(OPEN_TAG) + len(OPEN_TAG)
     end = page_text.index(CLOSE_TAG, start)
     payload = json.dumps(data, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c")
     return page_text[:start] + payload + page_text[end:]
 
 
-def embedded(page_text):
+def data_in_page(page_text):
     start = page_text.index(OPEN_TAG) + len(OPEN_TAG)
     return json.loads(page_text[start:page_text.index(CLOSE_TAG, start)])
 
 
-def write(page=PAGE, runs_dir=RUNS_DIR, validation_dir=VALIDATION_DIR):
+def update_page(page=PAGE, runs_dir=RUNS_DIR, validation_dir=VALIDATION_DIR):
     page = Path(page)
     text = page.read_text(encoding="utf-8")
-    page.write_text(inject(text, build(runs_dir, validation_dir)), encoding="utf-8", newline="\n")
+    page.write_text(put_data_into_page(text, page_data(runs_dir, validation_dir)), encoding="utf-8", newline="\n")
     return page
 
 
 if __name__ == "__main__":
-    print(write())
+    print(update_page())
