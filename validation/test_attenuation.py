@@ -28,8 +28,6 @@ def test_light_matches_the_beer_lambert_formula():
 
 
 def test_leaves_alone_never_create_deep_shade():
-    """At the sourced citrus leaf area range the leaves alone cannot block 90%
-    of the light, so all deep shade in the model comes from the fruit."""
     darkest_canopy_floor = np.exp(-params.LIGHT_EXTINCTION_COEFFICIENT.high * params.LEAF_AREA_INDEX.high)
     assert darkest_canopy_floor > params.DEEP_SHADE_LIGHT_LIMIT.value
 

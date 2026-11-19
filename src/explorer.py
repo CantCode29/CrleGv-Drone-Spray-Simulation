@@ -1,14 +1,3 @@
-"""Data block for the interactive explorer page, built from saved runs.
-
-The page at explorer/index.html reruns a JavaScript copy of the model in the
-browser. This module writes everything the page cannot work out live into its
-JSON data block: the input values, the 81 saved study runs and their effect
-analysis, the validation verdicts, and the central-run figures the page uses
-to check that its copy of the model matches the Python model. The page reads
-the model's short symbols and its own zone names, so the names used in the
-Python model are translated into those here.
-"""
-
 import json
 import subprocess
 from datetime import datetime

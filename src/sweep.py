@@ -1,7 +1,3 @@
-"""The 81-run study (decision D5): every combination of three levels of the
-four settings tested, and how much of the change in the result each setting
-explains."""
-
 import argparse
 import itertools
 import json
@@ -25,26 +21,27 @@ def three_levels(setting):
 
 def all_combinations():
     levels_by_setting = {name: three_levels(setting) for name, setting in params.SETTINGS_TESTED.items()}
-    return [dict(zip(levels_by_setting, combination))
-            for combination in itertools.product(*levels_by_setting.values())]
+    combinations = itertools.product(*levels_by_setting.values())
+    return [dict(zip(levels_by_setting, combination)) for combination in combinations]
 
 
 def run_all(droplets_released=None, save_to_disk=True, run_numbers=None):
-    numbered = list(enumerate(all_combinations()))
-    if run_numbers is not None:
-        numbered = [(number, settings) for number, settings in numbered if number in run_numbers]
-    return [run.run_simulation(f"fact_{number:02d}", droplets_released=droplets_released,
-                               save_to_disk=save_to_disk, **settings)
-            for number, settings in numbered]
+    records = []
+    for number, settings in enumerate(all_combinations()):
+        if run_numbers is not None and number not in run_numbers:
+            continue
+        records.append(run.run_simulation(f"fact_{number:02d}", droplets_released=droplets_released,
+                                          save_to_disk=save_to_disk, **settings))
+    return records
 
 
 def load_saved_runs(runs_dir=None):
-    runs_dir = Path(runs_dir) if runs_dir is not None else RUNS_DIR
+    runs_dir = RUNS_DIR if runs_dir is None else Path(runs_dir)
     return [json.loads(path.read_text()) for path in sorted(runs_dir.glob("fact_*/record.json"))]
 
 
 def save_study_summary(records, runs_dir=None):
-    runs_dir = Path(runs_dir) if runs_dir is not None else RUNS_DIR
+    runs_dir = RUNS_DIR if runs_dir is None else Path(runs_dir)
     top = best_run(records)
     summary = {
         "best_inputs": top["inputs"],
@@ -59,46 +56,60 @@ def best_run(records, measure=RANKING_MEASURE):
     return max(records, key=lambda record: record["outputs"][measure])
 
 
+def share_of_total(part, total):
+    return part / total if total > 0 else 0.0
+
+
+def main_effect(values, results, overall_mean, total_variation):
+    levels = np.unique(values)
+    level_means = np.array([results[values == level].mean() for level in levels])
+    sum_of_squares = sum(float((values == level).sum()) * (mean - overall_mean) ** 2
+                         for level, mean in zip(levels, level_means))
+
+    low, central, high = levels
+    if level_means[1] != 0:
+        change_in_result = (level_means[2] - level_means[0]) / level_means[1]
+        change_in_setting = (high - low) / central
+        sensitivity = change_in_result / change_in_setting
+    else:
+        sensitivity = None
+
+    return {
+        "levels": levels.tolist(),
+        "level_means": level_means.tolist(),
+        "share_of_variation": share_of_total(sum_of_squares, total_variation),
+        "sensitivity": sensitivity,
+    }
+
+
+def pair_effect(first_values, second_values, results, overall_mean, total_variation):
+    sum_of_squares = 0.0
+    for first_level in np.unique(first_values):
+        for second_level in np.unique(second_values):
+            at_first_level = first_values == first_level
+            at_second_level = second_values == second_level
+            at_both_levels = at_first_level & at_second_level
+            left_over = (results[at_both_levels].mean()
+                         - results[at_first_level].mean()
+                         - results[at_second_level].mean()
+                         + overall_mean)
+            sum_of_squares += float(at_both_levels.sum()) * left_over ** 2
+    return share_of_total(sum_of_squares, total_variation)
+
+
 def setting_effects(records, measure=RANKING_MEASURE):
     setting_names = list(params.SETTINGS_TESTED)
-    setting_values = {name: np.array([record["inputs"][name] for record in records], dtype=float)
-                      for name in setting_names}
+    values = {name: np.array([record["inputs"][name] for record in records], dtype=float)
+              for name in setting_names}
     results = np.array([record["outputs"][measure] for record in records], dtype=float)
     overall_mean = float(results.mean())
     total_variation = float(((results - overall_mean) ** 2).sum())
 
-    def share_of_variation(sum_of_squares):
-        return sum_of_squares / total_variation if total_variation > 0 else 0.0
-
-    main_effects = {}
-    for name in setting_names:
-        levels = np.unique(setting_values[name])
-        level_means = np.array([results[setting_values[name] == level].mean() for level in levels])
-        sum_of_squares = sum(float((setting_values[name] == level).sum()) * (mean - overall_mean) ** 2
-                             for level, mean in zip(levels, level_means))
-        low, central, high = levels
-        sensitivity = (((level_means[2] - level_means[0]) / level_means[1]) / ((high - low) / central)
-                       if level_means[1] != 0 else None)
-        main_effects[name] = {
-            "levels": levels.tolist(),
-            "level_means": level_means.tolist(),
-            "share_of_variation": share_of_variation(sum_of_squares),
-            "sensitivity": sensitivity,
-        }
-
-    interactions = {}
-    for first, second in itertools.combinations(setting_names, 2):
-        sum_of_squares = 0.0
-        for first_level in np.unique(setting_values[first]):
-            for second_level in np.unique(setting_values[second]):
-                at_both_levels = ((setting_values[first] == first_level)
-                                  & (setting_values[second] == second_level))
-                left_unexplained = (results[at_both_levels].mean()
-                                    - results[setting_values[first] == first_level].mean()
-                                    - results[setting_values[second] == second_level].mean()
-                                    + overall_mean)
-                sum_of_squares += float(at_both_levels.sum()) * left_unexplained ** 2
-        interactions[f"{first} x {second}"] = share_of_variation(sum_of_squares)
+    main_effects = {name: main_effect(values[name], results, overall_mean, total_variation)
+                    for name in setting_names}
+    interactions = {f"{first} x {second}": pair_effect(values[first], values[second], results,
+                                                      overall_mean, total_variation)
+                    for first, second in itertools.combinations(setting_names, 2)}
 
     explained = (sum(effect["share_of_variation"] for effect in main_effects.values())
                  + sum(interactions.values()))

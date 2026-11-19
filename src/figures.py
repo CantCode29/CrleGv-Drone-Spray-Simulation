@@ -1,14 +1,3 @@
-"""Figures for the results chapter (plan item W4.4), drawn from saved runs.
-
-Each colour has one job. The maps show amounts, so each uses a single colour
-running from light to dark: blue for spray, orange for light and aqua for
-active virus. The depth zones are in order, so outer, middle and inner take
-steps of one blue ramp, with the shaded spots next to fruit in orange. Signed
-effects use a blue and red pair. Every palette was checked with the colour
-validator before use, and each line is labelled directly so that no reader
-has to rely on colour alone.
-"""
-
 import csv
 import functools
 import json
@@ -34,7 +23,7 @@ import survival
 ROOT = Path(__file__).resolve().parent.parent
 RUNS_DIR = Path(os.environ.get("CRLEGV_RUNS_DIR", ROOT / "runs"))
 FIGURES_DIR = Path(os.environ.get("CRLEGV_FIGURES_DIR", ROOT / "figures"))
-VALIDATION_DIR = Path(os.environ.get("CRLEGV_VALIDATION_DIR", RUNS_DIR / "validation" / "post-sourcing"))
+VALIDATION_DIR = Path(os.environ.get("CRLEGV_VALIDATION_DIR", RUNS_DIR / "validation"))
 DPI = 300
 TEXT_WIDTH_IN = 6.3
 
@@ -54,7 +43,6 @@ AQUA_RAMP = ("#cce8d9", "#b4dbc6", "#9ad0b4", "#80c3a2", "#62b890", "#43ac7f", "
 
 SERIES = "#2a78d6"
 NEGATIVE = "#e34948"
-DEEMPHASIS = MUTED
 ZONE_STYLES = (("outer", "Outer", "#86b6ef"), ("middle", "Mid", "#2a78d6"),
                ("inner", "Inner", "#104281"), ("shaded_next_to_fruit", "Microhabitat", "#eb6834"))
 SETTING_STYLES = (("drone_speed", "Flight speed", "Flight speed", "m/s", 1.0),
@@ -76,7 +64,7 @@ STYLE = {
 }
 
 
-def _in_house_style(draw):
+def _in_our_style(draw):
     @functools.wraps(draw)
     def draw_in_style(*args, **kwargs):
         with plt.rc_context(STYLE):
@@ -165,7 +153,7 @@ def _label_position_axes(panel):
     panel.set_ylabel("Depth below canopy top (m)")
 
 
-@_in_house_style
+@_in_our_style
 def draw_light_map(canopy, path, dpi=DPI):
     figure, panel = plt.subplots(figsize=(TEXT_WIDTH_IN, 4.1))
     image = _draw_cell_values(panel, canopy, canopy.share_of_full_light,
@@ -187,7 +175,7 @@ def draw_light_map(canopy, path, dpi=DPI):
     return _save_figure(figure, path, dpi)
 
 
-@_in_house_style
+@_in_our_style
 def draw_spray_map(canopy, spray_landed, zones, path, dpi=DPI):
     released = params.DROPLETS_PER_RUN.value
     percent_per_m2 = 100.0 * spray_landed / (canopy.cell_size ** 2 * released)
@@ -211,7 +199,7 @@ def draw_spray_map(canopy, spray_landed, zones, path, dpi=DPI):
     return _save_figure(figure, path, dpi)
 
 
-@_in_house_style
+@_in_our_style
 def draw_virus_maps(canopy, path, checkpoint_hours=None, dpi=DPI):
     checkpoint_hours = params.CHECKPOINT_HOURS if checkpoint_hours is None else checkpoint_hours
     figure, panels = plt.subplots(1, len(checkpoint_hours), figsize=(TEXT_WIDTH_IN, 2.5), sharey=True)
@@ -243,7 +231,7 @@ def survival_curve_by_zone(canopy, spray_landed, zones, hours):
     return curves
 
 
-@_in_house_style
+@_in_our_style
 def draw_survival_curves(canopy, spray_landed, zones, path, dpi=DPI):
     first_72_hours = np.linspace(0.0, 72.0, 289)
     three_weeks_in_days = np.linspace(0.0, 21.0, 421)
@@ -282,7 +270,7 @@ def draw_survival_curves(canopy, spray_landed, zones, path, dpi=DPI):
     return _save_figure(figure, path, dpi)
 
 
-@_in_house_style
+@_in_our_style
 def draw_main_effects(summary, path, dpi=DPI):
     effects = summary["effects"]
     overall_mean = effects["overall_mean"]
@@ -315,14 +303,14 @@ def draw_main_effects(summary, path, dpi=DPI):
     return _save_figure(figure, path, dpi)
 
 
-@_in_house_style
+@_in_our_style
 def draw_effect_summary(summary, path, dpi=DPI):
     effects = summary["effects"]
     main_effects = effects["main_effects"]
     shares = [(label, 100.0 * main_effects[name]["share_of_variation"], SERIES)
               for name, label, _, _, _ in SETTING_STYLES]
-    shares += [("Two-factor interactions", 100.0 * sum(effects["interactions"].values()), DEEMPHASIS),
-               ("Higher-order terms", 100.0 * effects["higher_order_share"], DEEMPHASIS)]
+    shares += [("Two-factor interactions", 100.0 * sum(effects["interactions"].values()), MUTED),
+               ("Higher-order terms", 100.0 * effects["higher_order_share"], MUTED)]
     shares.sort(key=lambda bar: bar[1])
     sensitivities = sorted(((label, main_effects[name]["sensitivity"]) for name, label, _, _, _ in SETTING_STYLES),
                            key=lambda bar: abs(bar[1]))

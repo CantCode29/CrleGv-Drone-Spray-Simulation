@@ -1,10 +1,3 @@
-"""Stage 1: the canopy and the light inside it.
-
-Builds a 2D slice through a citrus canopy as a grid of square cells, works out
-the share of full sunlight that reaches each cell (Beer-Lambert law), and
-marks the cells in deep shade. Design decisions D1 and D3 are implemented here.
-"""
-
 from dataclasses import dataclass, field
 from typing import List, Tuple
 
@@ -57,18 +50,11 @@ class Canopy:
 
 
 def default_fruits(slice_width: float, slice_depth: float) -> List[Fruit]:
-    """Fruit placed through the outer and middle canopy, where citrus bears it.
-
-    Without fruit the light would depend on depth alone, and the model could
-    not tell a shaded spot beside a fruit from open inner canopy, which
-    research question 1 needs it to do. The fruit sit in evenly spaced rows,
-    with every second row shifted along by half a spacing.
-    """
     spacing = params.FRUIT_SPACING.value
     positions_across = np.arange(params.FIRST_FRUIT_FROM_LEFT_EDGE_M, slice_width, spacing)
     fruits = []
-    for fruit_row_number, depth in enumerate(params.FRUIT_ROW_DEPTHS_M):
-        shift = 0.0 if fruit_row_number % 2 == 0 else spacing / 2.0
+    for row_number, depth in enumerate(params.FRUIT_ROW_DEPTHS_M):
+        shift = 0.0 if row_number % 2 == 0 else spacing / 2.0
         for position in positions_across:
             if position + shift < slice_width:
                 fruits.append(Fruit(position_across=float(position + shift), depth=float(depth)))
@@ -81,13 +67,14 @@ def build_canopy(leaf_area_index: float = None,
                  slice_depth: float = None,
                  cell_size: float = None,
                  fruits: List[Fruit] = None) -> Canopy:
-    leaf_area_index = params.LEAF_AREA_INDEX.value if leaf_area_index is None else leaf_area_index
-    light_extinction_coefficient = (params.LIGHT_EXTINCTION_COEFFICIENT.value
-                                    if light_extinction_coefficient is None
-                                    else light_extinction_coefficient)
-    slice_width = params.SLICE_WIDTH.value if slice_width is None else slice_width
-    slice_depth = params.SLICE_DEPTH.value if slice_depth is None else slice_depth
-    cell_size = params.CELL_SIZE.value if cell_size is None else cell_size
+    leaf_area_index = params.value_or_default(leaf_area_index, params.LEAF_AREA_INDEX)
+    light_extinction_coefficient = params.value_or_default(light_extinction_coefficient,
+                                                           params.LIGHT_EXTINCTION_COEFFICIENT)
+    slice_width = params.value_or_default(slice_width, params.SLICE_WIDTH)
+    slice_depth = params.value_or_default(slice_depth, params.SLICE_DEPTH)
+    cell_size = params.value_or_default(cell_size, params.CELL_SIZE)
+    if fruits is None:
+        fruits = default_fruits(slice_width, slice_depth)
 
     cells_across = int(round(slice_width / cell_size))
     cells_deep = int(round(slice_depth / cell_size))
@@ -98,21 +85,17 @@ def build_canopy(leaf_area_index: float = None,
 
     leaf_area_per_cubic_metre = leaf_area_index / slice_depth
     leaf_area_density = np.full((cells_across, cells_deep), leaf_area_per_cubic_metre)
-
     leaf_area_above = np.tile(row_depths * leaf_area_per_cubic_metre, (cells_across, 1))
     light_blocked_by_leaves = light_extinction_coefficient * leaf_area_above
-
-    if fruits is None:
-        fruits = default_fruits(slice_width, slice_depth)
 
     light_blocked_by_fruit = np.zeros((cells_across, cells_deep))
     contains_fruit = np.zeros((cells_across, cells_deep), dtype=bool)
     for fruit in fruits:
-        fruit_columns = np.abs(column_positions - fruit.position_across) <= fruit.radius
+        columns_under_fruit = np.abs(column_positions - fruit.position_across) <= fruit.radius
         rows_below_fruit = row_depths > fruit.depth
-        light_blocked_by_fruit[np.ix_(fruit_columns, rows_below_fruit)] += params.FRUIT_LIGHT_BLOCKING.value
-        fruit_rows = np.abs(row_depths - fruit.depth) <= fruit.radius
-        contains_fruit[np.ix_(fruit_columns, fruit_rows)] = True
+        rows_of_fruit = np.abs(row_depths - fruit.depth) <= fruit.radius
+        light_blocked_by_fruit[np.ix_(columns_under_fruit, rows_below_fruit)] += params.FRUIT_LIGHT_BLOCKING.value
+        contains_fruit[np.ix_(columns_under_fruit, rows_of_fruit)] = True
 
     light_blocking = light_blocked_by_leaves + light_blocked_by_fruit
     share_of_full_light = np.exp(-light_blocking)
@@ -130,8 +113,6 @@ def build_canopy(leaf_area_index: float = None,
 
 
 def canopy_zones(canopy: Canopy) -> dict:
-    """The outer, middle and inner thirds of the canopy, plus the deep-shade
-    cells next to fruit."""
     rows_per_third = canopy.cells_deep // 3
     outer = np.zeros((canopy.cells_across, canopy.cells_deep), dtype=bool)
     middle = np.zeros((canopy.cells_across, canopy.cells_deep), dtype=bool)
@@ -139,13 +120,13 @@ def canopy_zones(canopy: Canopy) -> dict:
     outer[:, :rows_per_third] = True
     middle[:, rows_per_third:2 * rows_per_third] = True
     inner[:, 2 * rows_per_third:] = True
-    near_fruit = _cells_near(canopy.contains_fruit, NEXT_TO_FRUIT_CELLS)
+    near_fruit = cells_near(canopy.contains_fruit, NEXT_TO_FRUIT_CELLS)
     shaded_next_to_fruit = canopy.deep_shade & near_fruit
     return {"outer": outer, "middle": middle, "inner": inner,
             "shaded_next_to_fruit": shaded_next_to_fruit}
 
 
-def _cells_near(marked: np.ndarray, distance_in_cells: int) -> np.ndarray:
+def cells_near(marked: np.ndarray, distance_in_cells: int) -> np.ndarray:
     result = marked.copy()
     for _ in range(distance_in_cells):
         grown = result.copy()

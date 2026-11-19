@@ -20,9 +20,6 @@ def test_all_spray_is_accounted_for():
 
 
 def test_a_1_mm_drop_falls_at_a_realistic_speed():
-    """A 1 mm water droplet falls at roughly 4 m/s in still air. The Stokes
-    closed form does not apply here - Re is order 250, in the intermediate
-    branch of the piecewise drag law."""
     time_step = 0.001
     liquid_density, air_density, air_viscosity, gravity = (
         params.SPRAY_LIQUID_DENSITY.value, params.AIR_DENSITY.value,

@@ -1,10 +1,12 @@
-"""Runs the three stages for one set of settings and saves the results."""
-
 import json
 import os
-import resource
 import time
 from pathlib import Path
+
+try:
+    import resource
+except ImportError:
+    resource = None
 
 import numpy as np
 
@@ -20,6 +22,16 @@ def run_simulation(run_name: str, drone_height=None, drone_speed=None, downwash_
                    droplet_radius=None, leaf_area_index=None, light_extinction_coefficient=None,
                    droplets_released=None, save_to_disk=True) -> dict:
     started = time.time()
+    drone_height = params.value_or_default(drone_height, params.DRONE_HEIGHT_ABOVE_CANOPY)
+    drone_speed = params.value_or_default(drone_speed, params.DRONE_SPEED)
+    downwash_speed = params.value_or_default(downwash_speed, params.DOWNWASH_SPEED)
+    droplet_radius = params.value_or_default(droplet_radius, params.DROPLET_RADIUS)
+    leaf_area_index = params.value_or_default(leaf_area_index, params.LEAF_AREA_INDEX)
+    light_extinction_coefficient = params.value_or_default(light_extinction_coefficient,
+                                                           params.LIGHT_EXTINCTION_COEFFICIENT)
+    if droplets_released is None:
+        droplets_released = int(params.DROPLETS_PER_RUN.value)
+
     canopy = grid.build_canopy(leaf_area_index=leaf_area_index,
                                light_extinction_coefficient=light_extinction_coefficient)
     spray_landed, share_passing_through = trajectory.spray_canopy(
@@ -29,33 +41,27 @@ def run_simulation(run_name: str, drone_height=None, drone_speed=None, downwash_
     still_active_maps = survival.share_still_active_maps(canopy.share_of_full_light)
     zones = grid.canopy_zones(canopy)
 
-    virus_by_zone = {
-        str(hours): survival.summarise_zones(spray_landed, still_active_maps[hours], zones)
-        for hours in still_active_maps
-    }
+    virus_by_zone = {}
+    for hours, still_active in still_active_maps.items():
+        virus_by_zone[str(hours)] = survival.summarise_zones(spray_landed, still_active, zones)
     spray_by_zone = summarise_spray_by_zone(canopy, spray_landed, zones)
-    released = droplets_released if droplets_released is not None else int(params.DROPLETS_PER_RUN.value)
-    percent_by_zone = {zone_name: 100.0 * totals["spray_landed"] / released
-                       for zone_name, totals in spray_by_zone.items()}
+    percent_by_zone = {}
+    for zone_name, totals in spray_by_zone.items():
+        percent_by_zone[zone_name] = 100.0 * totals["spray_landed"] / droplets_released
+
     runtime = time.time() - started
-    peak_memory_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+    peak_memory_mb = peak_memory_in_mb()
 
     record = {
         "run_name": run_name,
         "inputs": {
-            "drone_height": (drone_height if drone_height is not None
-                             else params.DRONE_HEIGHT_ABOVE_CANOPY.value),
-            "drone_speed": drone_speed if drone_speed is not None else params.DRONE_SPEED.value,
-            "downwash_speed": (downwash_speed if downwash_speed is not None
-                               else params.DOWNWASH_SPEED.value),
-            "droplet_radius": (droplet_radius if droplet_radius is not None
-                               else params.DROPLET_RADIUS.value),
-            "leaf_area_index": (leaf_area_index if leaf_area_index is not None
-                                else params.LEAF_AREA_INDEX.value),
-            "light_extinction_coefficient": (light_extinction_coefficient
-                                             if light_extinction_coefficient is not None
-                                             else params.LIGHT_EXTINCTION_COEFFICIENT.value),
-            "droplets_released": released,
+            "drone_height": drone_height,
+            "drone_speed": drone_speed,
+            "downwash_speed": downwash_speed,
+            "droplet_radius": droplet_radius,
+            "leaf_area_index": leaf_area_index,
+            "light_extinction_coefficient": light_extinction_coefficient,
+            "droplets_released": droplets_released,
         },
         "outputs": {
             "share_passing_through_canopy": float(share_passing_through),
@@ -69,22 +75,33 @@ def run_simulation(run_name: str, drone_height=None, drone_speed=None, downwash_
             "virus_by_zone": virus_by_zone,
             "virus_compared_with_outer": compare_virus_with_outer(virus_by_zone),
         },
-        "performance": {"runtime_s": round(runtime, 3), "peak_memory_mb": round(peak_memory_mb, 1)},
+        "performance": {"runtime_s": round(runtime, 3), "peak_memory_mb": peak_memory_mb},
     }
 
     if save_to_disk:
-        folder = RUNS_DIR / run_name
-        folder.mkdir(parents=True, exist_ok=True)
-        (folder / "record.json").write_text(json.dumps(record, indent=2))
-        np.savez_compressed(
-            folder / "arrays.npz",
-            spray_landed=spray_landed,
-            share_of_full_light=canopy.share_of_full_light,
-            deep_shade=canopy.deep_shade,
-            **{f"still_active_{int(hours)}h": still_active_maps[hours] for hours in still_active_maps},
-        )
-
+        save_run(run_name, record, canopy, spray_landed, still_active_maps)
     return record
+
+
+def peak_memory_in_mb():
+    if resource is None:
+        return None
+    return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0, 1)
+
+
+def save_run(run_name, record, canopy, spray_landed, still_active_maps):
+    folder = RUNS_DIR / run_name
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "record.json").write_text(json.dumps(record, indent=2))
+    still_active_arrays = {f"still_active_{int(hours)}h": still_active
+                           for hours, still_active in still_active_maps.items()}
+    np.savez_compressed(
+        folder / "arrays.npz",
+        spray_landed=spray_landed,
+        share_of_full_light=canopy.share_of_full_light,
+        deep_shade=canopy.deep_shade,
+        **still_active_arrays,
+    )
 
 
 def summarise_spray_by_zone(canopy, spray_landed, zones) -> dict:
@@ -92,13 +109,20 @@ def summarise_spray_by_zone(canopy, spray_landed, zones) -> dict:
     summary = {}
     for zone_name, in_zone in zones.items():
         spray_in_zone = spray_landed[in_zone]
-        average_per_cell = float(spray_in_zone.mean()) if spray_in_zone.size else 0.0
+        if spray_in_zone.size:
+            average_per_cell = float(spray_in_zone.mean())
+            spray_per_m2 = float(spray_in_zone.sum() / (spray_in_zone.size * cell_area))
+        else:
+            average_per_cell = 0.0
+            spray_per_m2 = 0.0
+        if average_per_cell > 0:
+            unevenness = float(spray_in_zone.std() / average_per_cell)
+        else:
+            unevenness = None
         summary[zone_name] = {
             "spray_landed": float(spray_in_zone.sum()),
-            "spray_per_m2": (float(spray_in_zone.sum() / (spray_in_zone.size * cell_area))
-                             if spray_in_zone.size else 0.0),
-            "unevenness": (float(spray_in_zone.std() / average_per_cell)
-                           if average_per_cell > 0 else None),
+            "spray_per_m2": spray_per_m2,
+            "unevenness": unevenness,
         }
     return summary
 
@@ -107,14 +131,13 @@ def compare_virus_with_outer(virus_by_zone: dict) -> dict:
     comparison = {}
     for hours, zones in virus_by_zone.items():
         outer = zones["outer"]["average_share_still_active"]
-        comparison[hours] = {
-            zone_name: {
-                "difference_in_percentage_points":
-                    100.0 * (zones[zone_name]["average_share_still_active"] - outer),
-                "ratio_to_outer": zones[zone_name]["average_share_still_active"] / outer,
+        comparison[hours] = {}
+        for zone_name in ("inner", "shaded_next_to_fruit"):
+            zone = zones[zone_name]["average_share_still_active"]
+            comparison[hours][zone_name] = {
+                "difference_in_percentage_points": 100.0 * (zone - outer),
+                "ratio_to_outer": zone / outer,
             }
-            for zone_name in ("inner", "shaded_next_to_fruit")
-        }
     return comparison
 
 
@@ -124,7 +147,9 @@ def depth_spray_reaches(canopy, spray_landed, cutoff_share_of_busiest_row=0.01) 
         return 0.0
     cutoff = spray_by_row.max() * cutoff_share_of_busiest_row
     rows_above_cutoff = np.nonzero(spray_by_row >= cutoff)[0]
-    return float(canopy.row_depths[rows_above_cutoff[-1]]) if len(rows_above_cutoff) else 0.0
+    if len(rows_above_cutoff) == 0:
+        return 0.0
+    return float(canopy.row_depths[rows_above_cutoff[-1]])
 
 
 if __name__ == "__main__":
